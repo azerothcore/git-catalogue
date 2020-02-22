@@ -1,0 +1,12 @@
+<div class="media">
+  <img [src]="'https://raw.githubusercontent.com/' + fullName + '/master/icon.png'" alt="logo" class="mr-3 logo-small">
+  <div class="media-body">
+    <h4 class="mt-0 mb-0">
+      <a href="#">{{ name }}</a>
+    </h4>
+    <span class="text-muted text-tiny">
+      <fa-icon [icon]="faStar"></fa-icon> {{ stars }} | Created {{ created | amTimeAgo }}
+    </span>
+    <p>{{ description }}</p>
+  </div>
+</div>
