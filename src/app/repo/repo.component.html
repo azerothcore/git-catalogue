@@ -1,5 +1,10 @@
 <div class="media">
-  <img [src]="'https://raw.githubusercontent.com/' + fullName + '/master/icon.png'" alt="logo" class="mr-3 logo-small">
+  <img
+    [src]="'https://raw.githubusercontent.com/' + fullName + '/master/icon.png'"
+    alt="{{fullName}}"
+    class="mr-3 logo-small"
+    onerror="this.src = 'https://avatars0.githubusercontent.com/u/20147732?v=4';"
+  >
   <div class="media-body">
     <h4 class="mt-0 mb-0">
       <a href="#">{{ name }}</a>

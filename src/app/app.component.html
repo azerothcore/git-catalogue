@@ -1,14 +1,69 @@
-<div class="container">
+<div class="container mt-5">
+
+  <div class="row">
+    <div class="col-6">
+      Search an item by name:
+
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="search">
+            <fa-icon [icon]="faSearch"></fa-icon>
+         </span>
+        </div>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search an item in the catalogue"
+          [(ngModel)]="search"
+          (ngModelChange)="refresh()"
+          aria-label="Search"
+          aria-describedby="search"
+        >
+      </div>
+    </div>
+
+    <div class="col-6">
+      <div class="col alert alert-info alert-submit">
+        <p>
+          Want to submit your <b>repository</b>?
+          Check the instructions <a href="/catalogue/module-submit.html">here</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
   <div class="row">
     <div class="col-12">
 
-      <app-repo
-        [name]="'mod-transmog'"
-        [stars]="19"
-        [created]="'2016-11-17T09:24:30Z'"
-        [description]="'Plug&Play transmog module for AzerothCore, based on Rochet2 works'"
-        [fullName]="'azerothcore/mod-transmog'">
-      </app-repo>
+      <mat-tab-group (focusChange)="page = 0">
+        <mat-tab *ngFor="let t of catalogueService.CONF.tabs | keyvalue" label="{{t.key}}">
+
+          <div *ngIf="catalogueService.items$[t.key] | async as items" class="mt-2">
+            <div *ngFor="let item of currentPageItems(items)">
+
+              <app-repo
+                [name]="item.name"
+                [stars]="item.stargazers_count"
+                [created]="item.created_at"
+                [description]="item.description"
+                [fullName]="item.full_name">
+              </app-repo>
+
+            </div>
+
+            <mat-paginator
+              [pageIndex]="page"
+              [length]="items.items.length"
+              [pageSize]="catalogueService.CONF.pageSize"
+              (page)="onPageChange($event)"
+              [hidePageSize]="true"
+            >
+            </mat-paginator>
+
+          </div>
+
+        </mat-tab>
+      </mat-tab-group>
 
     </div>
   </div>
