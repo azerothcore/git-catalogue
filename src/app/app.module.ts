@@ -9,23 +9,32 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTabsModule } from '@angular/material/tabs';
 import { FormsModule } from '@angular/forms';
+import { RepoDetailsComponent } from './repo-details/repo-details.component';
+import { AppRoutingModule } from './app-routing.module';
+import { HomeComponent } from './home/home.component';
+import { HowtoComponent } from './howto/howto.component';
+import { MarkdownModule } from 'ngx-markdown';
 
 @NgModule({
   declarations: [
     AppComponent,
-    RepoComponent
+    RepoComponent,
+    RepoDetailsComponent,
+    HomeComponent,
+    HowtoComponent,
   ],
   imports: [
     FormsModule,
     BrowserModule,
+    AppRoutingModule,
     FontAwesomeModule,
     MomentModule,
     HttpClientModule,
     BrowserAnimationsModule,
     MatPaginatorModule,
     MatTabsModule,
+    MarkdownModule.forRoot(),
   ],
-  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

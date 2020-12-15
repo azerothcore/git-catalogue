@@ -1,14 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Config } from './catalogue.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CatalogueService {
-  items$: { [key: string]: Observable<any> } = {};
 
-  CONF;
+  CONF: Config;
+  items$: { [key: string]: Observable<any> } = {};
 
   constructor(
     private http: HttpClient,

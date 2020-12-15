@@ -7,11 +7,12 @@ import { faStar, IconDefinition } from '@fortawesome/free-solid-svg-icons';
   styleUrls: ['./repo.component.scss']
 })
 export class RepoComponent {
+  @Input() id: number;
   @Input() name: string;
   @Input() stars: number;
   @Input() created: Date;
   @Input() description: string;
   @Input() fullName: string;
 
-  faStar: IconDefinition = faStar;
+  readonly faStar: IconDefinition = faStar;
 }
