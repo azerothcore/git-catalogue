@@ -31,27 +31,38 @@ export class CatalogueService {
       return of(JSON.parse(item)["value"]);
     }
 
-    return this.getItems(githubTopic, key);
+    return this.getFromAPI(
+      `https://api.github.com/search/repositories?page=${this.CONF.page}&per_page=${this.CONF.perPage}&q=${this.CONF.ORGANIZATION}fork:true+topic:${githubTopic}+sort:stars`,
+      key
+    );
   }
 
-  getItems(githubTopic: string, key: string): Observable<any> {
-    return this.http
-      .get(
-        `https://api.github.com/search/repositories?page=${this.CONF.page}&per_page=${this.CONF.perPage}&q=${this.CONF.ORGANIZATION}fork:true+topic:${githubTopic}+sort:stars`
-      )
-      .pipe(
-        tap((data) => {
-          localStorage.setItem(
-            key,
-            JSON.stringify({ timeDate: new Date().getTime(), value: data })
-          );
-        })
-      );
+  getFromAPI(URL: string, key: string): Observable<any> {
+    return this.http.get(URL).pipe(
+      tap((data) => {
+        localStorage.setItem(
+          key,
+          JSON.stringify({ timeDate: new Date().getTime(), value: data })
+        );
+      })
+    );
   }
 
   private expireMinutes(minutes: number, timeDate: number): boolean {
     const diff = Math.abs(new Date().getTime() - timeDate);
     const diffMinutes = Math.floor(diff / 1000) / 60;
     return minutes < diffMinutes;
+  }
+
+  getLocalRepo(id: number): Observable<any> {
+    const key = "repo-" + id;
+
+    const item = localStorage.getItem(key);
+
+    if (item && !this.expireMinutes(30, JSON.parse(item)["timeDate"])) {
+      return of(JSON.parse(item)["value"]);
+    }
+
+    return this.getFromAPI("https://api.github.com/repositories/" + id, key);
   }
 }
