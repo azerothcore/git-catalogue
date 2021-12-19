@@ -14,15 +14,10 @@ import { AppRoutingModule } from './app-routing.module';
 import { HomeComponent } from './home/home.component';
 import { HowtoComponent } from './howto/howto.component';
 import { MarkdownModule } from 'ngx-markdown';
+import { CatalogueComponent } from './catalogue/catalogue.component';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    RepoComponent,
-    RepoDetailsComponent,
-    HomeComponent,
-    HowtoComponent,
-  ],
+  declarations: [AppComponent, RepoComponent, RepoDetailsComponent, HomeComponent, HowtoComponent, CatalogueComponent],
   imports: [
     FormsModule,
     BrowserModule,
@@ -35,6 +30,6 @@ import { MarkdownModule } from 'ngx-markdown';
     MatTabsModule,
     MarkdownModule.forRoot(),
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

@@ -8,9 +8,8 @@ describe('HowtoComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ HowtoComponent ]
-    })
-    .compileComponents();
+      declarations: [HowtoComponent],
+    }).compileComponents();
   });
 
   beforeEach(() => {

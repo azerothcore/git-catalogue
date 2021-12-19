@@ -1,17 +1,15 @@
 <div class="media">
   <img
     [src]="'https://raw.githubusercontent.com/' + fullName + '/master/icon.png'"
-    alt="{{fullName}}"
+    alt="{{ fullName }}"
     class="mr-3 logo-small"
     onerror="this.src = 'https://avatars0.githubusercontent.com/u/20147732?v=4';"
-  >
+  />
   <div class="media-body">
     <h4 class="mt-0 mb-0">
       <a href="#/details/{{ id }}">{{ name }}</a>
     </h4>
-    <span class="text-muted text-tiny">
-      <fa-icon [icon]="faStar"></fa-icon> {{ stars }} | Created {{ created | amTimeAgo }}
-    </span>
+    <span class="text-muted text-tiny"> <fa-icon [icon]="faStar"></fa-icon> {{ stars }} | Created {{ created | amTimeAgo }} </span>
     <p>{{ description }}</p>
   </div>
 </div>

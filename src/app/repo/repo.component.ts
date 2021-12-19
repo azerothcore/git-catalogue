@@ -4,7 +4,7 @@ import { faStar, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 @Component({
   selector: 'app-repo',
   templateUrl: './repo.component.html',
-  styleUrls: ['./repo.component.scss']
+  styleUrls: ['./repo.component.scss'],
 })
 export class RepoComponent {
   @Input() id: number;

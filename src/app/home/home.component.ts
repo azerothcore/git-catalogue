@@ -6,14 +6,9 @@ import { CatalogueService } from '../services/catalogue/catalogue.service';
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
 })
 export class HomeComponent {
-
-  constructor(
-    public catalogueService: CatalogueService,
-    public cdRef: ChangeDetectorRef,
-  ) {}
+  constructor(public catalogueService: CatalogueService, public cdRef: ChangeDetectorRef) {}
 
   page = 0;
   search: string;
@@ -30,9 +25,8 @@ export class HomeComponent {
   currentPageItems(modules): {}[] {
     let filteredItems = modules.items;
     if (!!this.search) {
-      filteredItems = filteredItems.filter(item => item.name.toLowerCase().indexOf(this.search.toLowerCase()) > -1);
+      filteredItems = filteredItems.filter((item) => item.name.toLowerCase().indexOf(this.search.toLowerCase()) > -1);
     }
-    return filteredItems.slice(this.catalogueService.CONF.pageSize * this.page, this.catalogueService.CONF.pageSize * (this.page+1));
+    return filteredItems.slice(this.catalogueService.CONF.pageSize * this.page, this.catalogueService.CONF.pageSize * (this.page + 1));
   }
-
 }
