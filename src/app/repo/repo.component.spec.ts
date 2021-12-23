@@ -8,16 +8,14 @@ describe('RepoComponent', () => {
   let component: RepoComponent;
   let fixture: ComponentFixture<RepoComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [ RepoComponent ],
-      imports: [
-       MomentModule,
-       FontAwesomeModule,
-      ],
-    })
-    .compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        declarations: [RepoComponent],
+        imports: [MomentModule, FontAwesomeModule],
+      }).compileComponents();
+    }),
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(RepoComponent);

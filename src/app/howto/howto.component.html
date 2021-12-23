@@ -1,0 +1,41 @@
+<a href="#/home"><fa-icon [icon]="faCaretLeft"></fa-icon> &nbsp; back to Catalogue</a>
+
+<h2 class="mt-3">How to add an item in the catalogue</h2>
+
+<p>In order to add your repository in the catalogue, you need to add the github topic related to each tab.</p>
+
+<h4>Tabs & topics</h4>
+<ul>
+  <li *ngFor="let tab of catalogueService.CONF.tabs | keyvalue">
+    <strong>{{ tab.key }}:</strong> {{ tab.value }}
+  </li>
+</ul>
+
+<h4>Add these information in your project README</h4>
+<ul>
+  <li><b>Name:</b> &nbsp; <i>name of your lua script.</i></li>
+  <li><b>Author:</b> &nbsp; <i>username of the original author (in case it's forked into an organization).</i></li>
+  <li><b>Repository:</b> &nbsp; <i>link to the GitHub repository.</i></li>
+  <li><b>Download:</b> &nbsp; <i>link to download the sources as .zip (take it from GitHub).</i></li>
+  <li><b>License:</b> &nbsp; <i>license used to release the code.</i></li>
+</ul>
+
+<h4>Description</h4>
+
+<p>Give a complete description of what does the lua script and how it does it.</p>
+
+<h4>Optional / Recommended</h4>
+<ul>
+  <li>
+    Add a <code>README.md</code> in the root folder with a complete description of your lua script. It will be shown in the details page of
+    the catalogue.
+  </li>
+  <li>Add an <code>icon.png</code> in the root folder. It will be shown in the lua script list and details page of the catalogue.</li>
+  <li>Use the <code>db_assembler</code> to include your SQL patches.</li>
+  <li>Follow best practices from the skeleton-lua (.gitattributes, .gitkeep etc...)</li>
+  <li>
+    Give the user the biggest amount of options for configuration possible. It reduces the need to modify the code because "something
+    doesn't work as I would like to".
+  </li>
+  <li>Use the GNU Affero General Public License v3.0.</li>
+</ul>
