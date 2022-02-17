@@ -11,16 +11,16 @@ export class CatalogueService {
   CONF: Config;
   items$: { [key: string]: Observable<any> } = {};
 
-  constructor(private http: HttpClient) {
-    try {
-      this.CONF = require('src/assets/config.json');
-    } catch {
-      this.CONF = require('src/assets/default.json');
-    }
+  private configURL = 'assets/default.json';
 
-    for (const k of Object.keys(this.CONF.tabs)) {
-      this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
-    }
+  constructor(private http: HttpClient) {
+    this.http.get<Config>(this.configURL).subscribe((config: Config) => {
+      this.CONF = config;
+
+      for (const k of Object.keys(this.CONF.tabs)) {
+        this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
+      }
+    });
   }
 
   private getLocalItems(githubTopic: string): Observable<any> {
