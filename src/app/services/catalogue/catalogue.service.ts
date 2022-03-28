@@ -24,10 +24,10 @@ export class CatalogueService {
   }
 
   private getLocalItems(githubTopic: string): Observable<any> {
-    const key = `${this.CONF.page}-${this.CONF.perPage}-${this.CONF.ORGANIZATION}-${githubTopic}`;
+    const key = `${this.CONF.page}-${this.CONF.perPage}-${this.CONF.organization}-${githubTopic}`;
     const item = localStorage.getItem(key);
-    const topicFilter = githubTopic !== '' ? `+topic${githubTopic}` : '';
-    const orgFilter = !!this.CONF.ORGANIZATION && this.CONF.ORGANIZATION !== '' ? `org:${this.CONF.ORGANIZATION}+` : '';
+    const topicFilter = githubTopic !== '' ? `+topic:${githubTopic}` : '';
+    const orgFilter = !!this.CONF.organization && this.CONF.organization !== '' ? `org:${this.CONF.organization}+` : '';
 
     if (item && !this.expireMinutes(30, JSON.parse(item).timeDate)) {
       return of(JSON.parse(item).value);
