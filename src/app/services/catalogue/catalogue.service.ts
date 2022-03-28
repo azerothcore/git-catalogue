@@ -26,13 +26,15 @@ export class CatalogueService {
   private getLocalItems(githubTopic: string): Observable<any> {
     const key = `${this.CONF.page}-${this.CONF.perPage}-${this.CONF.ORGANIZATION}-${githubTopic}`;
     const item = localStorage.getItem(key);
+    const topicFilter = githubTopic !== '' ? `+topic${githubTopic}` : '';
+    const orgFilter = !!this.CONF.ORGANIZATION && this.CONF.ORGANIZATION !== '' ? `org:${this.CONF.ORGANIZATION}+` : '';
 
     if (item && !this.expireMinutes(30, JSON.parse(item).timeDate)) {
       return of(JSON.parse(item).value);
     }
 
     return this.getFromAPI(
-      `https://api.github.com/search/repositories?page=${this.CONF.page}&per_page=${this.CONF.perPage}&q=${this.CONF.ORGANIZATION}fork:true+topic:${githubTopic}+sort:stars`,
+      `https://api.github.com/search/repositories?page=${this.CONF.page}&per_page=${this.CONF.perPage}&q=${orgFilter}fork:true${topicFilter}+sort:stars`,
       key,
     );
   }

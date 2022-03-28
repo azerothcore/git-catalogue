@@ -6,7 +6,7 @@
 
 <h4>Tabs & topics</h4>
 <ul>
-  <li *ngFor="let tab of catalogueService.CONF.tabs | keyvalue">
+  <li *ngFor="let tab of catalogueService.CONF?.tabs | keyvalue">
     <strong>{{ tab.key }}:</strong> {{ tab.value }}
   </li>
 </ul>

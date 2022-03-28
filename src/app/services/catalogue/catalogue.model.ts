@@ -1,5 +1,5 @@
 export interface Config {
-  ORGANIZATION: string;
+  organization: string;
   page: number;
   perPage: number;
   pageSize: number;
