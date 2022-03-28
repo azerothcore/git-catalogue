@@ -1,13 +1,9 @@
 {
-  "organization": "",
+  "organization": "UNICT-DMI",
   "page": 1,
   "perPage": 500,
-  "pageSize": 8,
+  "pageSize": 4,
   "tabs": {
-    "All Modules": "azerothcore-module",
-    "Premium Modules": "azerothcore-module+ac-premium",
-    "Tools": "azerothcore-tools",
-    "Lua scripts": "azerothcore-lua",
-    "SQL": "azerothcore-sql"
+    "Projects": ""
   }
 }

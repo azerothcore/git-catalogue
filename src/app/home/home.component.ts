@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { faTelegram } from '@fortawesome/free-brands-svg-icons';
 import { faSearch, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { CatalogueService } from '../services/catalogue/catalogue.service';
 
@@ -13,6 +14,7 @@ export class HomeComponent {
   page = 0;
   search: string;
   readonly faSearch: IconDefinition = faSearch;
+  readonly faTelegram: IconDefinition = faTelegram;
 
   refresh(): void {
     this.cdRef.detectChanges();
