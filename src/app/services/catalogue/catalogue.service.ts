@@ -64,4 +64,8 @@ export class CatalogueService {
 
     return this.getFromAPI('https://api.github.com/repositories/' + id, key);
   }
+
+  get confTabsKeys(): string[] {
+    return this.CONF && Object.keys(this.CONF?.tabs);
+  }
 }

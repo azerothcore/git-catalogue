@@ -31,8 +31,8 @@
 <div class="row">
   <div class="col-12">
     <mat-tab-group (focusChange)="page = 0">
-      <mat-tab *ngFor="let t of catalogueService.CONF?.tabs | keyvalue" label="{{ t.key }}">
-        <div *ngIf="catalogueService.items$[t.key] | async as items" class="mt-2">
+      <mat-tab *ngFor="let key of catalogueService.confTabsKeys" label="{{ key }}">
+        <div *ngIf="catalogueService.items$[key] | async as items" class="mt-2">
           <div *ngFor="let item of currentPageItems(items)">
             <app-repo
               [id]="item.id"
