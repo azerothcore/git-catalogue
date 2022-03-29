@@ -4,6 +4,9 @@
   "perPage": 500,
   "pageSize": 6,
   "tabs": {
-    "Projects": ""
+    "Projects": "",
+    "Telegram Bots": "telegram-bot",
+    "UNICT": "unict",
+    "DMI": "dmi"
   }
 }
