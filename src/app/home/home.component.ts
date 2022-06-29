@@ -3,6 +3,7 @@ import { PageEvent } from '@angular/material/paginator';
 import { faTelegram } from '@fortawesome/free-brands-svg-icons';
 import { faSearch, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { CatalogueService } from '../services/catalogue/catalogue.service';
+import { Repository } from 'src/@types';
 
 @Component({
   selector: 'app-home',
@@ -24,7 +25,7 @@ export class HomeComponent {
     this.page = page.pageIndex;
   }
 
-  currentPageItems(modules): {}[] {
+  currentPageItems(modules: { items: Repository[] }): Repository[] {
     let filteredItems = modules.items;
     if (!!this.search) {
       filteredItems = filteredItems.filter((item) => item.name.toLowerCase().indexOf(this.search.toLowerCase()) > -1);
