@@ -3,5 +3,11 @@ export interface Config {
   page: number;
   perPage: number;
   pageSize: number;
-  tabs: { [key: string]: string };
+  tabs: Record<string, Tab>;
 }
+
+export interface Tab {
+  topic?: string;
+  org?: string;
+}
+
