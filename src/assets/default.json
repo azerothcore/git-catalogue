@@ -4,9 +4,23 @@
   "perPage": 500,
   "pageSize": 6,
   "tabs": {
-    "Projects": "",
-    "Telegram Bots": "telegram-bot",
-    "UNICT": "unict",
-    "DMI": "dmi"
+    "Projects": {
+      "org": "UNICT-DMI"
+    },
+    "Telegram Bots": {
+      "org": "UNICT-DMI",
+      "topic": "telegram-bot"
+    },
+    "UNICT": {
+      "org": "UNICT-DMI",
+      "topic": "unict"
+    },
+    "DMI": {
+      "org": "UNICT-DMI",
+      "topic": "dmi"
+    },
+    "Appunti": {
+      "topic": "unict-dmi-appunti"
+    }
   }
 }
