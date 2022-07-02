@@ -82,6 +82,6 @@ export class CatalogueService {
   }
   
   getRawReadme(repo: string, default_branch: string): Observable<string> {
-    return this.http.get(`https://raw.githubusercontent.com/${repo}/${default_branch}/README.md?time=${Date.now()}`, { responseType: 'text' });
+    return this.http.get(`https://raw.githubusercontent.com/${repo}/${default_branch}/README.md`, { responseType: 'text' });
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { catchError, switchMap } from 'rxjs/operators';
 import { Repository } from 'src/@types';
 import { CatalogueService } from '../catalogue/catalogue.service';
 
@@ -25,7 +25,7 @@ export class RepoDetailsResolverService implements Resolve<RepoDetailsData> {
     return repo$.pipe(
       switchMap( (repo) => forkJoin({
         repo: of(repo),
-        readme: this.catalogueService.getRawReadmeDefault(repo)
+        readme: this.catalogueService.getRawReadmeDefault(repo).pipe(catchError ((error) => of(`:no_entry: ${error.status}`)))
       }))
     );
   }
