@@ -2,14 +2,15 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { Config } from './catalogue.model';
+import { Repository } from 'src/@types';
+import { Config, Tab } from './catalogue.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CatalogueService {
   CONF: Config;
-  items$: { [key: string]: Observable<any> } = {};
+  items$: Record<string, Observable<Repository>> = {};
 
   private configURL = 'assets/default.json';
 
@@ -23,15 +24,17 @@ export class CatalogueService {
     });
   }
 
-  private getLocalItems(githubTopic: string): Observable<any> {
-    const key = `${this.CONF.page}-${this.CONF.perPage}-${this.CONF.organization}-${githubTopic}`;
+  private getLocalItems(tab: Tab): Observable<Repository> {
+    const { org = '', topic = '' } = tab;
+    const key = `${this.CONF.page}-${this.CONF.perPage}-${org}-${topic}`;
     const item = localStorage.getItem(key);
-    const topicFilter = githubTopic !== '' ? `+topic:${githubTopic}` : '';
-    const orgFilter = !!this.CONF.organization && this.CONF.organization !== '' ? `org:${this.CONF.organization}+` : '';
 
     if (item && !this.expireMinutes(30, JSON.parse(item).timeDate)) {
       return of(JSON.parse(item).value);
     }
+
+    const topicFilter = topic ? `+topic:${topic}` : '';
+    const orgFilter = org ? `org:${org}+` : '';
 
     return this.getFromAPI(
       `https://api.github.com/search/repositories?page=${this.CONF.page}&per_page=${this.CONF.perPage}&q=${orgFilter}fork:true${topicFilter}+sort:stars`,
@@ -39,10 +42,15 @@ export class CatalogueService {
     );
   }
 
-  getFromAPI(URL: string, key: string): Observable<any> {
+  getFromAPI(URL: string, key: string): Observable<Repository> {
     return this.http.get(URL).pipe(
-      tap((data) => {
-        localStorage.setItem(key, JSON.stringify({ timeDate: new Date().getTime(), value: data }));
+      tap({
+        next: (data: Repository) => {
+          localStorage.setItem(key, JSON.stringify({ timeDate: new Date().getTime(), value: data }));
+        },
+        error: (err) => {
+          console.error(err);
+        },
       }),
     );
   }
@@ -53,7 +61,7 @@ export class CatalogueService {
     return minutes < diffMinutes;
   }
 
-  getLocalRepo(id: number): Observable<any> {
+  getLocalRepo(id: number): Observable<Repository> {
     const key = 'repo-' + id;
 
     const item = localStorage.getItem(key);
@@ -62,7 +70,7 @@ export class CatalogueService {
       return of(JSON.parse(item).value);
     }
 
-    return this.getFromAPI('https://api.github.com/repositories/' + id, key);
+    return this.getFromAPI(`https://api.github.com/repositories/${id}`, key);
   }
 
   get confTabsKeys(): string[] {
