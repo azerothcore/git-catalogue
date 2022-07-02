@@ -1,6 +1,6 @@
 # Git Catalogue
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 9.0.1.
+# [Live Demo](https://unict-dmi.github.io/git-catalogue/#/home)
 
 ## Development server
 
