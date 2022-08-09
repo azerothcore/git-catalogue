@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Repository } from 'src/@types';
@@ -14,7 +15,7 @@ export class CatalogueService {
 
   private configURL = 'assets/default.json';
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private route: ActivatedRoute) {
     this.http.get<Config>(this.configURL).subscribe((config: Config) => {
       this.CONF = config;
 
@@ -75,6 +76,19 @@ export class CatalogueService {
 
   get confTabsKeys(): string[] {
     return this.CONF && Object.keys(this.CONF?.tabs);
+  }
+
+  get confTabPaths(): string[] {
+    return this.CONF && Object.values(this.CONF.tabs).map((tab) => tab.path);
+  }
+
+  get tabIndex(): number {
+    if(!this.confTabPaths) {
+      return -1;
+    }
+
+    const tabName = this.route.snapshot.paramMap.get('tab');
+    return tabName ? this.confTabPaths.indexOf(`/${tabName}`) : 0;
   }
   
   getRawReadmeDefault( repo: Repository ): Observable<string> {

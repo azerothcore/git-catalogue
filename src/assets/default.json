@@ -4,19 +4,24 @@
   "pageSize": 8,
   "tabs": {
     "All Modules": {
-      "topic": "azerothcore-module"
+      "topic": "azerothcore-module",
+      "path": "/azerothcore-module"
     },
     "Premium Modules": {
-      "topic": "azerothcore-module+ac-premium"
+      "topic": "azerothcore-module+ac-premium",
+      "path": "/azerothcore-module+ac-premium"
     },
     "Tools": {
-      "topic": "azerothcore-tools"
+      "topic": "azerothcore-tools",
+      "path": "/azerothcore-tools"
     },
     "Lua scripts": {
-      "topic": "azerothcore-lua"
+      "topic": "azerothcore-lua",
+      "path": "/azerothcore-lua"
     },
     "SQL": {
-      "topic": "azerothcore-sql"
+      "topic": "azerothcore-sql",
+      "path": "/azerothcore-sql"
     }
   }
 }
