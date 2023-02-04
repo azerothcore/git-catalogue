@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { concatMap, map, reduce, takeWhile, tap } from 'rxjs/operators';
+import { map, reduce, tap } from 'rxjs/operators';
 import { Repository, RepositoriesPage } from 'src/@types';
 import { Config, Tab } from './catalogue.model';
 
