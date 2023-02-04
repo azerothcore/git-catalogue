@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { concatMap, map, reduce, takeWhile, tap } from 'rxjs/operators';
-import { Repository, RepositoryPage } from 'src/@types';
+import { Repository, RepositoriesPage } from 'src/@types';
 import { Config, Tab } from './catalogue.model';
 
 @Injectable({
@@ -40,8 +40,8 @@ export class CatalogueService {
     const perPage = this.CONF.perPage;
     let totalSize = null;
 
-    const getPage = (page) => {
-      return this.http.get<RepositoryPage>(`https://api.github.com/search/repositories?page=${page}&per_page=${this.CONF.perPage}&q=${orgFilter}fork:true${topicFilter}+sort:stars`);
+    const getPage = (page: number) => {
+      return this.http.get<RepositoriesPage>(`https://api.github.com/search/repositories?page=${page}&per_page=${this.CONF.perPage}&q=${orgFilter}fork:true${topicFilter}+sort:stars`);
     };
 
     const pages$ = new Observable<Repository[]>((observer) => {
@@ -55,7 +55,8 @@ export class CatalogueService {
           }),
         ).subscribe((items) => {
           observer.next(items);
-          if (perPage * page < totalSize) {
+          const hasNextPage = perPage * page < totalSize;
+          if (hasNextPage) {
             emitItems(page + 1);
           } else {
             observer.complete();
@@ -71,7 +72,7 @@ export class CatalogueService {
     return this.storable(pages$, key);
   }
 
-  storable(obs: Observable<any>, key: string): Observable<any> {
+  storable<T extends Repository | Repository[]>(obs: Observable<T>, key: string): Observable<T> {
     return obs.pipe(
       tap({
         next: (data: any) => {

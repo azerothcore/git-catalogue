@@ -19,7 +19,7 @@ export type User = {
   site_admin: boolean;
 };
 
-export type RepositoryPage = {
+export type RepositoriesPage = {
   total_count: number;
   items: Repository[];
 };
