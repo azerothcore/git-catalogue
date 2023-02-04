@@ -1,6 +1,5 @@
 {
-  "page": 1,
-  "perPage": 500,
+  "perPage": 100,
   "pageSize": 8,
   "tabs": {
     "All Modules": {
