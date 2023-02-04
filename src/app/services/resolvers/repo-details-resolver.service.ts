@@ -7,7 +7,8 @@ import { CatalogueService } from '../catalogue/catalogue.service';
 
 export type RepoDetailsData = {
   repo: Repository;
-  readme: string
+  readme: string;
+  logo: string;
 };
 
 @Injectable({
@@ -25,7 +26,8 @@ export class RepoDetailsResolverService implements Resolve<RepoDetailsData> {
     return repo$.pipe(
       switchMap( (repo) => forkJoin({
         repo: of(repo),
-        readme: this.catalogueService.getRawReadmeDefault(repo)
+        readme: this.catalogueService.getRawReadmeDefault(repo),
+        logo: of(`https://raw.githubusercontent.com/${repo.full_name}/master/icon.png`)
       }))
     );
   }
