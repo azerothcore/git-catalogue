@@ -46,7 +46,7 @@
 
           <mat-paginator
             [pageIndex]="page"
-            [length]="items.items.length"
+            [length]="items.length"
             [pageSize]="catalogueService.CONF.pageSize"
             (page)="onPageChange($event)"
             [hidePageSize]="true"

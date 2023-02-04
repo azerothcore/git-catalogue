@@ -39,8 +39,8 @@ export class HomeComponent {
     }
   }
 
-  currentPageItems(modules: { items: Repository[] }): Repository[] {
-    let filteredItems = modules.items;
+  currentPageItems(modules: Repository[]): Repository[] {
+    let filteredItems = modules;
     if (!!this.search) {
       filteredItems = filteredItems.filter((item) => item.name.toLowerCase().indexOf(this.search.toLowerCase()) > -1);
     }
