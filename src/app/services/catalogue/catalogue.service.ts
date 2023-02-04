@@ -41,33 +41,35 @@ export class CatalogueService {
     let totalSize = null;
 
     const getPage = (page: number) => {
-      return this.http.get<RepositoriesPage>(`https://api.github.com/search/repositories?page=${page}&per_page=${this.CONF.perPage}&q=${orgFilter}fork:true${topicFilter}+sort:stars`);
+      return this.http.get<RepositoriesPage>(
+        `https://api.github.com/search/repositories?page=${page}&per_page=${this.CONF.perPage}&q=${orgFilter}fork:true${topicFilter}+sort:stars`,
+      );
     };
 
     const pages$ = new Observable<Repository[]>((observer) => {
       const emitItems = (page) => {
-        getPage(page).pipe(
-          map((res) => {
-            if (!totalSize) {
-              totalSize = res.total_count;
+        getPage(page)
+          .pipe(
+            map((res) => {
+              if (!totalSize) {
+                totalSize = res.total_count;
+              }
+              return res.items;
+            }),
+          )
+          .subscribe((items) => {
+            observer.next(items);
+            const hasNextPage = perPage * page < totalSize;
+            if (hasNextPage) {
+              emitItems(page + 1);
+            } else {
+              observer.complete();
             }
-            return res.items;
-          }),
-        ).subscribe((items) => {
-          observer.next(items);
-          const hasNextPage = perPage * page < totalSize;
-          if (hasNextPage) {
-            emitItems(page + 1);
-          } else {
-            observer.complete();
-          }
-        });
+          });
       };
 
       emitItems(1);
-    }).pipe(
-      reduce((acc, val) => acc.concat(val), []),
-    );
+    }).pipe(reduce((acc, val) => acc.concat(val), []));
 
     return this.storable(pages$, key);
   }
@@ -120,13 +122,13 @@ export class CatalogueService {
     return tabName ? this.confTabPaths.indexOf(`/${tabName}`) : 0;
   }
 
-  getRawReadmeDefault( repo: Repository ): Observable<string> {
-    return this.getRawReadme( repo.full_name, repo.default_branch );
+  getRawReadmeDefault(repo: Repository): Observable<string> {
+    return this.getRawReadme(repo.full_name, repo.default_branch);
   }
 
   getRawReadme(repo: string, defaultBranch: string): Observable<string> {
-    return this.http.get(`https://raw.githubusercontent.com/${repo}/${defaultBranch}/README.md?time=${Date.now()}`,
-      { responseType: 'text' },
-    );
+    return this.http.get(`https://raw.githubusercontent.com/${repo}/${defaultBranch}/README.md?time=${Date.now()}`, {
+      responseType: 'text',
+    });
   }
 }
