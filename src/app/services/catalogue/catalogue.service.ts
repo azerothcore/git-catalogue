@@ -47,37 +47,35 @@ export class CatalogueService {
     };
 
     const pages$ = new Observable<Repository[]>((observer) => {
-      const emitItems = (page) => {
-        getPage(page)
-          .pipe(
-            map((res) => {
-              if (!totalSize) {
-                totalSize = res.total_count;
-              }
-              return res.items;
-            }),
-          )
-          .subscribe((items) => {
-            observer.next(items);
-            const hasNextPage = perPage * page < totalSize;
-            if (hasNextPage) {
-              emitItems(page + 1);
-            } else {
-              observer.complete();
+      const fetchPage = (page) => getPage(page)
+        .pipe(
+          map((res) => {
+            if (!totalSize) {
+              totalSize = res.total_count;
             }
-          });
-      };
+            return res.items;
+          }),
+        )
+        .subscribe((items) => {
+          observer.next(items);
+          const hasNextPage = perPage * page < totalSize;
+          if (hasNextPage) {
+            fetchPage(page + 1);
+          } else {
+            observer.complete();
+          }
+        });
 
-      emitItems(1);
+      fetchPage(1);
     }).pipe(reduce((acc, val) => acc.concat(val), []));
 
-    return this.storable(pages$, key);
+    return this.cacheable(pages$, key);
   }
 
-  storable<T extends Repository | Repository[]>(obs: Observable<T>, key: string): Observable<T> {
+  cacheable<T extends Repository | Repository[]>(obs: Observable<T>, key: string): Observable<T> {
     return obs.pipe(
       tap({
-        next: (data: any) => {
+        next: (data: T) => {
           localStorage.setItem(key, JSON.stringify({ timeDate: new Date().getTime(), value: data }));
         },
         error: (err) => {
@@ -102,7 +100,7 @@ export class CatalogueService {
       return of(JSON.parse(item).value);
     }
 
-    return this.storable(this.http.get<Repository>(`https://api.github.com/repositories/${id}`), key);
+    return this.cacheable(this.http.get<Repository>(`https://api.github.com/repositories/${id}`), key);
   }
 
   get confTabsKeys(): string[] {

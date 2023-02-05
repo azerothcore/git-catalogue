@@ -13,9 +13,9 @@ const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'home', component: HomeComponent },
   { path: 'tab/:tab', component: HomeComponent },
-  { 
-    path: 'details/:id', 
-    component: RepoDetailsComponent,  
+  {
+    path: 'details/:id',
+    component: RepoDetailsComponent,
     resolve: { data: RepoDetailsResolverService },
     runGuardsAndResolvers: 'paramsChange'
   },

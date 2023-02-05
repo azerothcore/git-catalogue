@@ -7,26 +7,30 @@ import { CatalogueService } from '../catalogue/catalogue.service';
 
 export type RepoDetailsData = {
   repo: Repository;
-  readme: string
+  readme: string;
+  logo: string;
 };
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class RepoDetailsResolverService implements Resolve<RepoDetailsData> {
 
-  constructor( private readonly catalogueService: CatalogueService ) { }
+  constructor(private readonly catalogueService: CatalogueService) {
+  }
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): RepoDetailsData | Observable<RepoDetailsData> | Promise<RepoDetailsData> {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): RepoDetailsData | Observable<RepoDetailsData>
+    | Promise<RepoDetailsData> {
     const id = route.params.id;
 
     const repo$ = this.catalogueService.getLocalRepo(id);
 
     return repo$.pipe(
-      switchMap( (repo) => forkJoin({
+      switchMap((repo) => forkJoin({
         repo: of(repo),
-        readme: this.catalogueService.getRawReadmeDefault(repo)
-      }))
+        readme: this.catalogueService.getRawReadmeDefault(repo),
+        logo: of(`https://raw.githubusercontent.com/${repo.full_name}/master/icon.png`),
+      })),
     );
   }
 }
