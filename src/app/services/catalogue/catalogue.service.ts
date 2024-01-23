@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { map, reduce, tap } from 'rxjs/operators';
-import { Repository, RepositoriesPage } from 'src/@types';
+import { catchError, map, reduce, tap } from 'rxjs/operators';
+import { RepositoriesPage, Repository } from 'src/@types';
 import { Config, Tab } from './catalogue.model';
 
 @Injectable({
@@ -47,24 +47,25 @@ export class CatalogueService {
     };
 
     const pages$ = new Observable<Repository[]>((observer) => {
-      const fetchPage = (page) => getPage(page)
-        .pipe(
-          map((res) => {
-            if (!totalSize) {
-              totalSize = res.total_count;
+      const fetchPage = (page) =>
+        getPage(page)
+          .pipe(
+            map((res) => {
+              if (!totalSize) {
+                totalSize = res.total_count;
+              }
+              return res.items;
+            }),
+          )
+          .subscribe((items) => {
+            observer.next(items);
+            const hasNextPage = perPage * page < totalSize;
+            if (hasNextPage) {
+              fetchPage(page + 1);
+            } else {
+              observer.complete();
             }
-            return res.items;
-          }),
-        )
-        .subscribe((items) => {
-          observer.next(items);
-          const hasNextPage = perPage * page < totalSize;
-          if (hasNextPage) {
-            fetchPage(page + 1);
-          } else {
-            observer.complete();
-          }
-        });
+          });
 
       fetchPage(1);
     }).pipe(reduce((acc, val) => acc.concat(val), []));
@@ -125,8 +126,18 @@ export class CatalogueService {
   }
 
   getRawReadme(repo: string, defaultBranch: string): Observable<string> {
-    return this.http.get(`https://raw.githubusercontent.com/${repo}/${defaultBranch}/README.md?time=${Date.now()}`, {
-      responseType: 'text',
-    });
+    return this.http
+      .get(`https://raw.githubusercontent.com/${repo}/${defaultBranch}/README.md?time=${Date.now()}`, {
+        responseType: 'text',
+      })
+      .pipe(
+        catchError(() =>
+          this.http
+            .get(`https://raw.githubusercontent.com/${repo}/${defaultBranch}/.github/README.md?time=${Date.now()}`, {
+              responseType: 'text',
+            })
+            .pipe(catchError(() => of('No README found'))),
+        ),
+      );
   }
 }
