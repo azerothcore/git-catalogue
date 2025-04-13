@@ -1,3 +1,5 @@
+<title> {{ data.repo.name }} </title>
+
 <a href="#/home"><fa-icon [icon]="faCaretLeft"></fa-icon> &nbsp; back to Catalogue</a>
 
 <div *ngIf="data$ | async as data" class="mt-3">
@@ -55,7 +57,7 @@
             <fa-icon [icon]="faClock"></fa-icon> Created: <span class="float-right">{{ data.repo.created_at | amTimeAgo }}</span>
           </li>
           <li>
-            <fa-icon [icon]="faClock"></fa-icon> Last update: <span class="float-right">{{ data.repo.updated_at | amTimeAgo }}</span>
+            <fa-icon [icon]="faRotate"></fa-icon> Last update: <span class="float-right">{{ data.repo.pushed_at | amTimeAgo }}</span>
           </li>
           <li *ngIf="data.repo?.license">
             <fa-icon [icon]="faBalanceScale"></fa-icon> License: <span class="float-right">{{ data.repo.license.spdx_id }}</span>
