@@ -11,6 +11,7 @@ import {
   faGlobe,
   faStar,
   faUserCircle,
+  faSync,
 } from '@fortawesome/free-solid-svg-icons';
 import { Observable } from 'rxjs';
 import { pluck, tap } from 'rxjs/operators';
@@ -40,6 +41,7 @@ export class RepoDetailsComponent {
   readonly faCodeBranch = faCodeBranch;
   readonly faClock = faClock;
   readonly faBalanceScale = faBalanceScale;
+  readonly faSync = faSync;
 
   data$: Observable<RepoDetailsData>;
 }
