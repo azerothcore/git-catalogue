@@ -55,7 +55,7 @@
             <fa-icon [icon]="faClock"></fa-icon> Created: <span class="float-right">{{ data.repo.created_at | amTimeAgo }}</span>
           </li>
           <li>
-            <fa-icon [icon]="faClock"></fa-icon> Last update: <span class="float-right">{{ data.repo.pushed_at | amTimeAgo }}</span>
+            <fa-icon [icon]="faSync"></fa-icon> Last update: <span class="float-right">{{ data.repo.pushed_at | amTimeAgo }}</span>
           </li>
           <li *ngIf="data.repo?.license">
             <fa-icon [icon]="faBalanceScale"></fa-icon> License: <span class="float-right">{{ data.repo.license.spdx_id }}</span>
