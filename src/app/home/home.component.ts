@@ -1,10 +1,10 @@
+import { Location } from '@angular/common';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
-import { faSearch, IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { CatalogueService } from '../services/catalogue/catalogue.service';
-import { Repository } from 'src/@types';
 import { MatTabChangeEvent } from '@angular/material/tabs';
-import { Location } from '@angular/common';
+import { faSearch, IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import { Repository } from 'src/@types';
+import { CatalogueService } from '../services/catalogue/catalogue.service';
 
 @Component({
   selector: 'app-home',
@@ -12,10 +12,9 @@ import { Location } from '@angular/common';
   providers: [CatalogueService],
 })
 export class HomeComponent {
-  constructor(
-    public catalogueService: CatalogueService,
-    public cdRef: ChangeDetectorRef,
-    private location: Location) {}
+  constructor(public catalogueService: CatalogueService, public cdRef: ChangeDetectorRef, private location: Location) {
+    window.parent.document.title = 'GitCatalogue';
+  }
 
   page = 0;
   search: string;

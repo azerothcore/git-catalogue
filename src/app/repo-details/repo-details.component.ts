@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import {
@@ -13,7 +13,7 @@ import {
   faUserCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import { Observable } from 'rxjs';
-import { pluck } from 'rxjs/operators';
+import { pluck, tap } from 'rxjs/operators';
 import { RepoDetailsData } from '../services/resolvers/repo-details-resolver.service';
 
 @Component({
@@ -21,10 +21,12 @@ import { RepoDetailsData } from '../services/resolvers/repo-details-resolver.ser
   templateUrl: './repo-details.component.html',
   styleUrls: ['./repo-details.component.scss'],
 })
-export class RepoDetailsComponent{
-  constructor(private route: ActivatedRoute) {
-    this.data$ = route.data.pipe(
-      pluck('data')
+export class RepoDetailsComponent {
+  constructor(private readonly route: ActivatedRoute) {
+    this.data$ = route.data.pipe(pluck('data')).pipe(
+      tap((data) => {
+        window.parent.document.title = data.repo.name;
+      }),
     );
   }
 
@@ -40,5 +42,4 @@ export class RepoDetailsComponent{
   readonly faBalanceScale = faBalanceScale;
 
   data$: Observable<RepoDetailsData>;
-
 }
