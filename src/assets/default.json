@@ -1,6 +1,9 @@
 {
   "perPage": 100,
   "pageSize": 8,
+  "usePreGeneratedFile": false,
+  "preGeneratedFileUrl": "https://azerothcore.github.io/data/catalogue.json",
+  "globalSearch": true,
   "tabs": {
     "All Modules": {
       "topic": "azerothcore-module",

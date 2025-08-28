@@ -3,7 +3,8 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  usePreGeneratedFile: false  // Set to true to use pre-generated file instead of GitHub API
 };
 
 /*
