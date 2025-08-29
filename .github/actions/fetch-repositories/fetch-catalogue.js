@@ -80,12 +80,29 @@ class CatalogueFetcher {
     console.log(`Fetching repositories for ${this.globalSearch ? 'global' : org}/${topic}...`);
 
     while (hasMore) {
-      // Build query - include org filter only if not using global search
-      const topicFilter = topic ? `+topic:${topic}` : '';
-      const orgFilter = this.globalSearch ? '' : (org ? `org:${org}+` : '');
-      const query = `${orgFilter}fork:true${topicFilter}+sort:stars`;
+      // Build query with proper GitHub search syntax (spaces, not +)
+      let query = '';
+      if (!this.globalSearch && org) {
+        query += `org:${org} `;
+      }
+      // For global search, omit fork:true to include all repos with topic
+      if (!this.globalSearch) {
+        query += 'fork:true ';
+      }
+      if (topic) {
+        // Handle compound topics like "azerothcore-module+ac-premium"
+        if (topic.includes('+')) {
+          const topics = topic.split('+');
+          topics.forEach(t => {
+            query += `topic:${t.trim()} `;
+          });
+        } else {
+          query += `topic:${topic} `;
+        }
+      }
+      query = query.trim();
       
-      const url = `https://api.github.com/search/repositories?page=${page}&per_page=${this.perPage}&q=${encodeURIComponent(query)}`;
+      const url = `https://api.github.com/search/repositories?page=${page}&per_page=${this.perPage}&q=${encodeURIComponent(query)}&sort=stars&order=desc`;
       
       const response = await this.fetchWithRetry(url);
       const data = await response.json();
@@ -168,7 +185,7 @@ class CatalogueFetcher {
           this.totalRepos += repositories.length;
         } catch (error) {
           console.error(`Failed to fetch global/${topic}:`, error.message);
-          catalogueData.organizations[primaryOrg][topic] = [];
+          throw error; // Fail the workflow on any fetch error
         }
       }
     } else {
@@ -184,7 +201,7 @@ class CatalogueFetcher {
             this.totalRepos += repositories.length;
           } catch (error) {
             console.error(`Failed to fetch ${org}/${topic}:`, error.message);
-            catalogueData.organizations[org][topic] = [];
+            throw error; // Fail the workflow on any fetch error
           }
         }
       }
