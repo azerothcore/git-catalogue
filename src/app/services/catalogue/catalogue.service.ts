@@ -1,11 +1,11 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { catchError, map, reduce, tap } from 'rxjs/operators';
 import { RepositoriesPage, Repository } from 'src/@types';
 import { Config, Tab } from './catalogue.model';
-import { environment } from '../../../environments/environment';
+import { APP_CONFIG } from '../config/config.token';
 
 @Injectable({
   providedIn: 'root',
@@ -15,76 +15,17 @@ export class CatalogueService {
   items$: Record<string, Observable<Repository[]>> = {};
   private preGeneratedData: any | null = null;
   private preGenIndexById: Map<number, Repository> | null = null;
-  private configReady$ = new (class {
-    private resolved = false;
-    private observers: Array<() => void> = [];
-    wait(): Observable<void> {
-      return new Observable<void>((observer) => {
-        if (this.resolved) {
-          observer.next();
-          observer.complete();
-        } else {
-          this.observers.push(() => {
-            observer.next();
-            observer.complete();
-          });
-        }
-      });
+
+  constructor(
+    private http: HttpClient,
+    private route: ActivatedRoute,
+    @Inject(APP_CONFIG) conf: Config
+  ) {
+    this.CONF = conf;
+    // Initialize items immediately; config is preloaded during APP_INITIALIZER
+    for (const k of Object.keys(this.CONF.tabs)) {
+      this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
     }
-    signal(): void {
-      if (!this.resolved) {
-        this.resolved = true;
-        const obs = this.observers;
-        this.observers = [];
-        obs.forEach((fn) => fn());
-      }
-    }
-  })();
-
-  private configURLs = ['assets/config.json', 'assets/config.default.json'];
-
-  constructor(private http: HttpClient, private route: ActivatedRoute) {
-    this.loadConfiguration();
-  }
-
-  private loadConfiguration(): void {
-    this.tryLoadConfig(0);
-  }
-
-  private tryLoadConfig(index: number): void {
-    if (index >= this.configURLs.length) {
-      console.error('No configuration file found');
-      return;
-    }
-
-    const configURL = this.configURLs[index];
-    this.http.get<Config>(configURL).subscribe({
-      next: (config: Config) => {
-        this.CONF = config;
-        
-        // Override with environment setting if available
-        if (environment.usePreGeneratedFile !== undefined) {
-          this.CONF.usePreGeneratedFile = environment.usePreGeneratedFile;
-        }
-
-        console.log(`Loaded configuration from ${configURL}`);
-        
-        // Initialize items after config is loaded
-        for (const k of Object.keys(this.CONF.tabs)) {
-          this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
-        }
-        // Signal configuration readiness for consumers waiting on CONF
-        this.configReady$.signal();
-      },
-      error: (error) => {
-        if (error.status === 404) {
-          console.log(`Configuration file ${configURL} not found, trying next...`);
-          this.tryLoadConfig(index + 1);
-        } else {
-          console.error(`Error loading configuration from ${configURL}:`, error);
-        }
-      }
-    });
   }
 
   private getLocalItems(tab: Tab): Observable<Repository[]> {
@@ -107,7 +48,7 @@ export class CatalogueService {
 
   private getItemsFromPreGeneratedFile(org: string, topic: string, key: string): Observable<Repository[]> {
     const fileUrl = this.CONF.preGeneratedFileUrl || 'data/catalogue.json';
-    
+
     return this.http.get<any>(fileUrl).pipe(
       map(data => {
         // Navigate the JSON structure: organizations -> org -> topic
@@ -126,11 +67,11 @@ export class CatalogueService {
 
   private getItemsFromAPI(org: string, topic: string, key: string): Observable<Repository[]> {
     const topicFilter = topic ? `+topic:${topic}` : '';
-    
+
     // Check if this tab should use global search
     const tab = Object.values(this.CONF.tabs).find(t => t.org === org && t.topic === topic);
     const useGlobalSearch = tab?.globalSearch ?? this.CONF.globalSearch ?? false;
-    
+
     // Only include org filter if not using global search
     const orgFilter = useGlobalSearch ? '' : (org ? `org:${org}+` : '');
 
@@ -194,10 +135,6 @@ export class CatalogueService {
   }
 
   getLocalRepo(id: number): Observable<Repository> {
-    // Ensure configuration is loaded before deciding the data source
-    if (!this.CONF) {
-      return this.configReady$.wait().pipe(switchMap(() => this.getLocalRepo(id)));
-    }
     const key = 'repo-' + id;
 
     const item = localStorage.getItem(key);
@@ -237,11 +174,11 @@ export class CatalogueService {
   }
 
   get confTabsKeys(): string[] {
-    return this.CONF && Object.keys(this.CONF?.tabs);
+    return this.CONF ? Object.keys(this.CONF.tabs) : [];
   }
 
   get confTabPaths(): string[] {
-    return this.CONF && Object.values(this.CONF.tabs).map((tab) => tab.path);
+    return this.CONF ? Object.values(this.CONF.tabs).map((tab) => tab.path) : [];
   }
 
   get tabIndex(): number {
@@ -300,7 +237,7 @@ export class CatalogueService {
       const { org = 'default-org', topic = '' } = tab;
       const key = `${org}-${topic}`;
       localStorage.removeItem(key);
-    };
+    }
   }
 
   private refreshItems(): void {
@@ -358,9 +295,13 @@ export class CatalogueService {
       const { org = 'default-org', topic = '' } = tab;
       const key = `${org}-${topic}`;
       const item = localStorage.getItem(key);
-      if (!item) continue;
+      if (!item) {
+        continue;
+      }
       const parsed = JSON.parse(item);
-      if (this.expireMinutes(30, parsed.timeDate)) continue;
+      if (this.expireMinutes(30, parsed.timeDate)) {
+        continue;
+      }
       const repos: Repository[] = parsed.value || [];
       const match = repos.find((r) => r && r.id === Number(id));
       if (match) {

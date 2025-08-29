@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { AppComponent } from './app.component';
@@ -16,6 +16,16 @@ import { HowtoComponent } from './howto/howto.component';
 import { MarkdownModule } from 'ngx-markdown';
 import { CatalogueComponent } from './catalogue/catalogue.component';
 import { EmojiFixupPipe } from './pipes/emoji-fixup.pipe';
+import { AppConfigService } from './services/config/app-config.service';
+import { APP_CONFIG } from './services/config/config.token';
+
+export function initAppConfig(configService: AppConfigService) {
+  return () => configService.load();
+}
+
+export function provideAppConfig(configService: AppConfigService) {
+  return configService.getConfig();
+}
 
 @NgModule({
   declarations: [AppComponent, RepoComponent, RepoDetailsComponent, HomeComponent, HowtoComponent, CatalogueComponent, EmojiFixupPipe],
@@ -30,6 +40,10 @@ import { EmojiFixupPipe } from './pipes/emoji-fixup.pipe';
     MatPaginatorModule,
     MatTabsModule,
     MarkdownModule.forRoot(),
+  ],
+  providers: [
+    { provide: APP_INITIALIZER, useFactory: initAppConfig, deps: [AppConfigService], multi: true },
+    { provide: APP_CONFIG, useFactory: provideAppConfig, deps: [AppConfigService] },
   ],
   bootstrap: [AppComponent],
 })
