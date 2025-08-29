@@ -15,6 +15,31 @@ export class CatalogueService {
   items$: Record<string, Observable<Repository[]>> = {};
   private preGeneratedData: any | null = null;
   private preGenIndexById: Map<number, Repository> | null = null;
+  private configReady$ = new (class {
+    private resolved = false;
+    private observers: Array<() => void> = [];
+    wait(): Observable<void> {
+      return new Observable<void>((observer) => {
+        if (this.resolved) {
+          observer.next();
+          observer.complete();
+        } else {
+          this.observers.push(() => {
+            observer.next();
+            observer.complete();
+          });
+        }
+      });
+    }
+    signal(): void {
+      if (!this.resolved) {
+        this.resolved = true;
+        const obs = this.observers;
+        this.observers = [];
+        obs.forEach((fn) => fn());
+      }
+    }
+  })();
 
   private configURLs = ['assets/config.json', 'assets/config.default.json'];
 
@@ -48,6 +73,8 @@ export class CatalogueService {
         for (const k of Object.keys(this.CONF.tabs)) {
           this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
         }
+        // Signal configuration readiness for consumers waiting on CONF
+        this.configReady$.signal();
       },
       error: (error) => {
         if (error.status === 404) {
@@ -167,6 +194,10 @@ export class CatalogueService {
   }
 
   getLocalRepo(id: number): Observable<Repository> {
+    // Ensure configuration is loaded before deciding the data source
+    if (!this.CONF) {
+      return this.configReady$.wait().pipe(switchMap(() => this.getLocalRepo(id)));
+    }
     const key = 'repo-' + id;
 
     const item = localStorage.getItem(key);
