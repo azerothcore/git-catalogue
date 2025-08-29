@@ -14,19 +14,46 @@ export class CatalogueService {
   CONF: Config;
   items$: Record<string, Observable<Repository[]>> = {};
 
-  private configURL = 'assets/default.json';
+  private configURLs = ['assets/config.json', 'assets/config.default.json'];
 
   constructor(private http: HttpClient, private route: ActivatedRoute) {
-    this.http.get<Config>(this.configURL).subscribe((config: Config) => {
-      this.CONF = config;
-      
-      // Override with environment setting if available
-      if (environment.usePreGeneratedFile !== undefined) {
-        this.CONF.usePreGeneratedFile = environment.usePreGeneratedFile;
-      }
+    this.loadConfiguration();
+  }
 
-      for (const k of Object.keys(this.CONF.tabs)) {
-        this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
+  private loadConfiguration(): void {
+    this.tryLoadConfig(0);
+  }
+
+  private tryLoadConfig(index: number): void {
+    if (index >= this.configURLs.length) {
+      console.error('No configuration file found');
+      return;
+    }
+
+    const configURL = this.configURLs[index];
+    this.http.get<Config>(configURL).subscribe({
+      next: (config: Config) => {
+        this.CONF = config;
+        
+        // Override with environment setting if available
+        if (environment.usePreGeneratedFile !== undefined) {
+          this.CONF.usePreGeneratedFile = environment.usePreGeneratedFile;
+        }
+
+        console.log(`Loaded configuration from ${configURL}`);
+        
+        // Initialize items after config is loaded
+        for (const k of Object.keys(this.CONF.tabs)) {
+          this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
+        }
+      },
+      error: (error) => {
+        if (error.status === 404) {
+          console.log(`Configuration file ${configURL} not found, trying next...`);
+          this.tryLoadConfig(index + 1);
+        } else {
+          console.error(`Error loading configuration from ${configURL}:`, error);
+        }
       }
     });
   }

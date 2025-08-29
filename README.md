@@ -10,10 +10,39 @@ Example:
 ## Features
 
 - **Dual Data Source Mode**: Switch between real-time GitHub API calls and pre-generated static files
+- **Local Configuration**: Easy setup without modifying tracked files
 - **Automatic Caching**: Local storage caching to reduce API calls
 - **GitHub Actions Integration**: Automated repository data generation and deployment
 - **Configurable Topics**: Support for multiple organizations and topic filtering
 - **Performance Optimized**: Reduce API rate limits with pre-generated data
+
+## Quick Setup
+
+1. **Clone the repository**
+2. **Configure for your organization:**
+   ```bash
+   cp src/assets/config.default.json src/assets/config.json
+   ```
+3. **Edit `src/assets/config.json`** with your organization settings:
+   ```json
+   {
+     "preGeneratedFileUrl": "https://your-org.github.io/data/catalogue.json",
+     "tabs": {
+       "All Modules": {
+         "topic": "your-project-module",
+         "org": "your-org",
+         "path": "/module"
+       }
+     }
+   }
+   ```
+4. **Install and run:**
+   ```bash
+   npm install
+   npm start
+   ```
+
+> 📝 **Note**: The `config.json` file is git-ignored, so your local configuration won't conflict with upstream updates.
 
 ## Development
 
@@ -57,7 +86,7 @@ export const environment = {
 };
 ```
 
-You can also configure the data source in `src/assets/default.json`:
+You can also configure the data source in your local configuration file (`src/assets/config.json`):
 ```json
 {
   "usePreGeneratedFile": true,
@@ -65,15 +94,26 @@ You can also configure the data source in `src/assets/default.json`:
 }
 ```
 
+## Configuration Files
+
+This project uses a configuration system that prevents conflicts with upstream updates:
+
+- **`src/assets/config.default.json`** (tracked) - Default configuration
+- **`src/assets/config.json`** (git-ignored) - Your local configuration
+- **`src/assets/config.example.json`** (tracked) - Template for local configuration
+
+### How it works:
+1. The app first tries to load `config.json` (your local config)
+2. If not found, falls back to `config.default.json`
+3. Your local `config.json` is never committed, avoiding merge conflicts
+
+### Setting up your configuration:
+```bash
+cp src/assets/config.example.json src/assets/config.json
+# Edit config.json with your settings
+```
+
 ## GitHub Actions Setup
-
-### In this repository (git-catalogue)
-
-The repository includes a reusable GitHub Action at `.github/actions/fetch-repositories/` that:
-- Fetches repositories by organization and topics
-- Generates a JSON file with repository data
-- Handles rate limiting and retries
-- Supports multiple organizations and topics
 
 ### In your website repository
 
