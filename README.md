@@ -4,7 +4,7 @@ This is a generic project which allow to create a catalogue for your GitHub orga
 
 Example:
 
-- https://<your-org>.github.io/catalogue.html (an example catalogue)
+- https://www.azerothcore.org/catalogue.html (the default version of the catalogue)
 - https://unict-dmi.github.io/git-catalogue/#/home (fork by another open-source community)
 
 ## Features
