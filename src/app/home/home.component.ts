@@ -9,7 +9,6 @@ import { CatalogueService } from '../services/catalogue/catalogue.service';
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  providers: [CatalogueService],
 })
 export class HomeComponent {
   constructor(public catalogueService: CatalogueService, public cdRef: ChangeDetectorRef, private location: Location) {
