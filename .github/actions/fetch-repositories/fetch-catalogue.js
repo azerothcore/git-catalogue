@@ -32,6 +32,86 @@ class CatalogueFetcher {
     this.totalRepos = 0;
   }
 
+  // Normalize a single repo entry to a consistent property order and stable nested arrays
+  normalizeRepoEntry(repo) {
+    const owner = repo.owner || {};
+    const license = repo.license ? { spdx_id: repo.license.spdx_id } : null;
+    const topics = Array.isArray(repo.topics) ? [...repo.topics].sort((a, b) => a.localeCompare(b)) : [];
+    return {
+      id: repo.id,
+      name: repo.name,
+      full_name: repo.full_name,
+      description: repo.description,
+      stargazers_count: repo.stargazers_count,
+      created_at: repo.created_at,
+      default_branch: repo.default_branch,
+      owner: {
+        login: owner.login,
+        avatar_url: owner.avatar_url,
+        html_url: owner.html_url
+      },
+      html_url: repo.html_url,
+      forks_count: repo.forks_count,
+      watchers_count: repo.watchers_count,
+      subscribers_count: repo.subscribers_count,
+      pushed_at: repo.pushed_at,
+      updated_at: repo.updated_at,
+      license: license,
+      topics
+    };
+  }
+
+  // Normalize an array of repositories for stable ordering
+  normalizeRepositories(repositories) {
+    const toTime = (v) => {
+      if (!v) return 0;
+      try {
+        return (v instanceof Date) ? v.getTime() : new Date(v).getTime();
+      } catch (_) {
+        return 0;
+      }
+    };
+
+    return [...repositories].sort((a, b) => {
+      if (b.stargazers_count !== a.stargazers_count) {
+        return b.stargazers_count - a.stargazers_count;
+      }
+      const bt = toTime(b.pushed_at);
+      const at = toTime(a.pushed_at);
+      if (bt !== at) {
+        return bt - at;
+      }
+      const af = (a.full_name || '').toLowerCase();
+      const bf = (b.full_name || '').toLowerCase();
+      if (af < bf) return -1;
+      if (af > bf) return 1;
+      return 0;
+    });
+  }
+
+  // Build a normalized catalogue object with deterministic key and array order.
+  // Note: intentionally no generated_at field to avoid false diffs.
+  buildNormalizedCatalogue(raw) {
+    const normalized = {
+      global_search: !!raw.global_search,
+      organizations: {}
+    };
+
+    const orgKeys = Object.keys(raw.organizations || {}).sort((a, b) => a.localeCompare(b));
+    for (const org of orgKeys) {
+      const topics = raw.organizations[org] || {};
+      const topicKeys = Object.keys(topics).sort((a, b) => a.localeCompare(b));
+      normalized.organizations[org] = {};
+      for (const topic of topicKeys) {
+        const repos = Array.isArray(topics[topic]) ? topics[topic] : [];
+        const sortedRepos = this.normalizeRepositories(repos).map(r => this.normalizeRepoEntry(r));
+        normalized.organizations[org][topic] = sortedRepos;
+      }
+    }
+
+    return normalized;
+  }
+
   async delay(seconds) {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
   }
@@ -164,7 +244,6 @@ class CatalogueFetcher {
 
   async fetchAllRepositories() {
     const catalogueData = {
-      generated_at: new Date().toISOString(),
       global_search: this.globalSearch,
       organizations: {}
     };
@@ -215,8 +294,9 @@ class CatalogueFetcher {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    
-    fs.writeFileSync(this.outputPath, JSON.stringify(data, null, 2));
+    // Always write deterministically ordered content without a timestamp
+    const normalized = this.buildNormalizedCatalogue(data);
+    fs.writeFileSync(this.outputPath, JSON.stringify(normalized, null, 2));
     console.log(`Catalogue saved to ${this.outputPath}`);
   }
 
