@@ -65,6 +65,15 @@
                 }
               ]
             }
+            ,
+            "e2e": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.e2e.ts"
+                }
+              ]
+            }
           }
         },
         "serve": {
@@ -75,6 +84,9 @@
           "configurations": {
             "production": {
               "browserTarget": "git-catalogue:build:production"
+            },
+            "e2e": {
+              "browserTarget": "git-catalogue:build:e2e"
             }
           }
         },
@@ -128,6 +140,9 @@
           "configurations": {
             "production": {
               "devServerTarget": "git-catalogue:serve:production"
+            },
+            "e2e": {
+              "devServerTarget": "git-catalogue:serve:e2e"
             }
           }
         }
