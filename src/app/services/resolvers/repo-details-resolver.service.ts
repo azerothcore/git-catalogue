@@ -23,7 +23,7 @@ export class RepoDetailsResolverService implements Resolve<RepoDetailsData> {
     | Promise<RepoDetailsData> {
     const id = route.params.id;
 
-    const repo$ = this.catalogueService.getLocalRepo(id);
+    const repo$ = this.catalogueService.getLocalRepo(parseInt(id, 10));
 
     return repo$.pipe(
       switchMap((repo) => forkJoin({
