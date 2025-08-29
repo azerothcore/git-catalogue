@@ -36,8 +36,9 @@ jobs:
             echo "✅ Output file created successfully"
             echo "File size: $(du -h test-output.json | cut -f1)"
             
-            # Validate JSON structure
-            if jq -e '.generated_at and .organizations' test-output.json > /dev/null; then
+            # Validate JSON structure (no generated_at by design)
+            # Expect top-level keys: organizations (object) and global_search (boolean)
+            if jq -e 'has("organizations") and (.organizations|type=="object") and has("global_search")' test-output.json > /dev/null; then
               echo "✅ JSON structure is valid"
             else
               echo "❌ JSON structure is invalid"

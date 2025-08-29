@@ -84,11 +84,11 @@ The action only includes repository fields that are actually used by the git-cat
 
 ## Generated JSON Structure
 
-The action generates a JSON file with the following optimized structure:
+The action generates a JSON file with the following optimized structure. The `generated_at` timestamp is intentionally omitted to keep the output deterministic and avoid noisy diffs in CI and PRs.
 
 ```json
 {
-  "generated_at": "2025-08-28T12:00:00.000Z",
+  "global_search": true,
   "organizations": {
     "azerothcore": {
       "azerothcore-module": [
