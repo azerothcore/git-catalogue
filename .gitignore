@@ -45,6 +45,10 @@ testem.log
 !/e2e/protractor.conf.js
 /e2e/*.map
 
+# Playwright
+/test-results
+/playwright-report
+
 # System Files
 .DS_Store
 Thumbs.db
