@@ -26,7 +26,7 @@
           <strong>Required topic:</strong> 
           <code class="bg-light p-1 rounded">{{ tab.value.topic }}</code>
         </p>
-        <small class="text-muted">Organization: {{ tab.value.org || 'azerothcore' }}</small>
+        <small class="text-muted">Organization: {{ tab.value.org || 'default-org' }}</small>
       </div>
     </div>
   </div>
@@ -37,7 +37,7 @@
   <p>This catalogue searches <strong>globally across all of GitHub</strong> for repositories with the required topics. This means:</p>
   <ul class="mb-0">
     <li>Your repository can be in <strong>any GitHub organization or personal account</strong></li>
-    <li>You don't need to be part of the AzerothCore organization</li>
+    <li>You don't need to be part of any specific GitHub organization</li>
     <li>Simply adding the correct topic is enough to get your repository included</li>
     <li>The catalogue refreshes automatically every 30 minutes</li>
   </ul>
@@ -131,7 +131,7 @@
         <ul>
           <li><strong>Configuration options:</strong> Provide extensive configuration to avoid code modifications</li>
           <li><strong>Database patches:</strong> Use db_assembler for SQL patches if applicable</li>
-          <li><strong>Code quality:</strong> Follow AzerothCore coding standards</li>
+          <li><strong>Code quality:</strong> Follow standard coding best practices</li>
           <li><strong>Documentation:</strong> Include inline comments and documentation</li>
           <li><strong>Version control:</strong> Use proper .gitattributes and .gitignore files</li>
         </ul>
@@ -149,38 +149,5 @@
 
 <h4><i class="fas fa-question-circle"></i> Need Help?</h4>
 
-<div class="row">
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-body text-center">
-        <i class="fas fa-book fa-2x text-primary mb-2"></i>
-        <h6>Module Development</h6>
-        <a href="https://www.azerothcore.org/wiki/create-a-module" target="_blank" class="btn btn-sm btn-primary">
-          Module Creation Guide
-        </a>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-body text-center">
-        <i class="fas fa-code fa-2x text-success mb-2"></i>
-        <h6>Lua Scripting</h6>
-        <a href="https://www.azerothcore.org/wiki/lua-engine" target="_blank" class="btn btn-sm btn-success">
-          Lua Engine Guide
-        </a>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-body text-center">
-        <i class="fas fa-users fa-2x text-info mb-2"></i>
-        <h6>Community</h6>
-        <a href="https://discord.gg/gkt4y2x" target="_blank" class="btn btn-sm btn-info">
-          Join Discord
-        </a>
-      </div>
-    </div>
-  </div>
+
 </div>

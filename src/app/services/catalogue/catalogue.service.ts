@@ -32,7 +32,7 @@ export class CatalogueService {
   }
 
   private getLocalItems(tab: Tab): Observable<Repository[]> {
-    const { org = 'azerothcore', topic = '' } = tab;
+    const { org = 'default-org', topic = '' } = tab;
     const key = `${org}-${topic}`;
     const item = localStorage.getItem(key);
 
@@ -208,12 +208,12 @@ export class CatalogueService {
   }
 
   private clearCache(): void {
-    Object.keys(this.CONF.tabs).forEach(tabKey => {
+    for (const tabKey of Object.keys(this.CONF.tabs)) {
       const tab = this.CONF.tabs[tabKey];
-      const { org = 'azerothcore', topic = '' } = tab;
+      const { org = 'default-org', topic = '' } = tab;
       const key = `${org}-${topic}`;
       localStorage.removeItem(key);
-    });
+    };
   }
 
   private refreshItems(): void {

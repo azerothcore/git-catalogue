@@ -4,7 +4,7 @@ This is a generic project which allow to create a catalogue for your GitHub orga
 
 Example:
 
-- https://www.azerothcore.org/catalogue.html (the default version of the catalogue)
+- https://<your-org>.github.io/catalogue.html (an example catalogue)
 - https://unict-dmi.github.io/git-catalogue/#/home (fork by another open-source community)
 
 ## Features
@@ -61,7 +61,7 @@ You can also configure the data source in `src/assets/default.json`:
 ```json
 {
   "usePreGeneratedFile": true,
-  "preGeneratedFileUrl": "https://azerothcore.github.io/data/catalogue.json"
+  "preGeneratedFileUrl": "https://<your-org>.github.io/data/catalogue.json"
 }
 ```
 
@@ -75,7 +75,7 @@ The repository includes a reusable GitHub Action at `.github/actions/fetch-repos
 - Handles rate limiting and retries
 - Supports multiple organizations and topics
 
-### In your website repository (e.g., azerothcore.github.io)
+### In your website repository
 
 Add the workflow `.github/workflows/update-catalogue-data.yml` to automatically update repository data:
 
@@ -91,10 +91,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: azerothcore/git-catalogue/.github/actions/fetch-repositories@master
+      - uses: <your-org>/git-catalogue/.github/actions/fetch-repositories@master
         with:
-          organizations: '["azerothcore"]'
-          topics: '{"azerothcore": ["azerothcore-module", "azerothcore-tools"]}'
+          organizations: '["<your-org>"]'
+          topics: '{"<your-org>": ["module", "tools"]}'
           output-path: 'data/catalogue.json'
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Commit and push

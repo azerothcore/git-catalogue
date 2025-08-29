@@ -2,28 +2,28 @@
   "perPage": 100,
   "pageSize": 8,
   "usePreGeneratedFile": false,
-  "preGeneratedFileUrl": "https://azerothcore.github.io/data/catalogue.json",
+  "preGeneratedFileUrl": "https://<your-org>.github.io/data/catalogue.json",
   "globalSearch": true,
   "tabs": {
     "All Modules": {
-      "topic": "azerothcore-module",
-      "path": "/azerothcore-module"
+      "topic": "<your-project>-module",
+      "path": "/module"
     },
     "Premium Modules": {
-      "topic": "azerothcore-module+ac-premium",
-      "path": "/azerothcore-module+ac-premium"
+      "topic": "<your-project>-module+premium",
+      "path": "/module+premium"
     },
     "Tools": {
-      "topic": "azerothcore-tools",
-      "path": "/azerothcore-tools"
+      "topic": "<your-project>-tools",
+      "path": "/tools"
     },
     "Lua scripts": {
-      "topic": "azerothcore-lua",
-      "path": "/azerothcore-lua"
+      "topic": "<your-project>-lua",
+      "path": "/lua"
     },
     "SQL": {
-      "topic": "azerothcore-sql",
-      "path": "/azerothcore-sql"
+      "topic": "<your-project>-sql",
+      "path": "/sql"
     }
   }
 }

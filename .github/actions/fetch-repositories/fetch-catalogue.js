@@ -22,7 +22,7 @@ const path = require('path');
 class CatalogueFetcher {
   constructor() {
     this.token = process.env.GITHUB_TOKEN;
-    this.organizations = JSON.parse(process.env.ORGANIZATIONS || '["azerothcore"]');
+    this.organizations = JSON.parse(process.env.ORGANIZATIONS || '["default-org"]');
     this.topics = JSON.parse(process.env.TOPICS || '{}');
     this.globalSearch = process.env.GLOBAL_SEARCH === 'true';
     this.outputPath = process.env.OUTPUT_PATH || 'data/catalogue.json';
@@ -42,7 +42,7 @@ class CatalogueFetcher {
         ...options,
         headers: {
           'Authorization': `token ${this.token}`,
-          'User-Agent': 'AzerothCore-Catalogue-Action',
+          'User-Agent': 'Git-Catalogue-Action',
           'Accept': 'application/vnd.github.v3+json',
           ...options.headers
         }
@@ -158,7 +158,7 @@ class CatalogueFetcher {
       Object.values(this.topics).forEach(topics => topics.forEach(topic => allTopics.add(topic)));
       
       // Use first organization as the key for backwards compatibility
-      const primaryOrg = this.organizations[0] || 'azerothcore';
+      const primaryOrg = this.organizations[0] || 'default-org';
       catalogueData.organizations[primaryOrg] = {};
       
       for (const topic of allTopics) {
@@ -175,7 +175,7 @@ class CatalogueFetcher {
       // Original organization-specific logic
       for (const org of this.organizations) {
         catalogueData.organizations[org] = {};
-        const orgTopics = this.topics[org] || ['azerothcore-module', 'azerothcore-module+ac-premium', 'azerothcore-tools', 'azerothcore-lua', 'azerothcore-sql'];
+        const orgTopics = this.topics[org] || [];
 
         for (const topic of orgTopics) {
           try {
