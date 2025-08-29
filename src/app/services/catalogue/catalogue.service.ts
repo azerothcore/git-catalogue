@@ -13,6 +13,8 @@ import { environment } from '../../../environments/environment';
 export class CatalogueService {
   CONF: Config;
   items$: Record<string, Observable<Repository[]>> = {};
+  private preGeneratedData: any | null = null;
+  private preGenIndexById: Map<number, Repository> | null = null;
 
   private configURLs = ['assets/config.json', 'assets/config.default.json'];
 
@@ -168,11 +170,38 @@ export class CatalogueService {
     const key = 'repo-' + id;
 
     const item = localStorage.getItem(key);
-
     if (item && !this.expireMinutes(30, JSON.parse(item).timeDate)) {
       return of(JSON.parse(item).value);
     }
 
+    // If using the pre-generated file, try to resolve from there instead of GitHub API
+    if (this.isUsingPreGeneratedFile()) {
+      // 1) Try to find the repo in cached tab lists first (fast path)
+      const cachedRepo = this.findRepoInTabCaches(id);
+      if (cachedRepo) {
+        const normalized = this.normalizeRepo(cachedRepo);
+        localStorage.setItem(key, JSON.stringify({ timeDate: new Date().getTime(), value: normalized }));
+        return of(normalized);
+      }
+
+      // 2) Load pre-generated data and search globally
+      return this.loadPreGeneratedData().pipe(
+        map(() => {
+          const repo = this.findRepoInPreGenIndex(id);
+          if (!repo) {
+            throw new Error('Repo not found in pre-generated data');
+          }
+          const normalized = this.normalizeRepo(repo);
+          localStorage.setItem(key, JSON.stringify({ timeDate: new Date().getTime(), value: normalized }));
+          return normalized;
+        }),
+        // If anything fails, fall back to API
+        catchError(() => this.http.get<Repository>(`https://api.github.com/repositories/${id}`)),
+        tap((repo) => localStorage.setItem(key, JSON.stringify({ timeDate: new Date().getTime(), value: repo })))
+      );
+    }
+
+    // Default: use GitHub API
     return this.cacheable(this.http.get<Repository>(`https://api.github.com/repositories/${id}`), key);
   }
 
@@ -247,5 +276,84 @@ export class CatalogueService {
     for (const k of Object.keys(this.CONF.tabs)) {
       this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
     }
+  }
+
+  // Pre-generated data helpers
+  private loadPreGeneratedData(): Observable<any> {
+    if (this.preGeneratedData && this.preGenIndexById) {
+      return of(this.preGeneratedData);
+    }
+    const fileUrl = this.CONF?.preGeneratedFileUrl || 'data/catalogue.json';
+    return this.http.get<any>(fileUrl).pipe(
+      tap((data) => {
+        this.preGeneratedData = data;
+        this.buildPreGenIndex(data);
+      })
+    );
+  }
+
+  private buildPreGenIndex(data: any): void {
+    this.preGenIndexById = new Map<number, Repository>();
+    if (!data || !data.organizations) {
+      return;
+    }
+    const orgs = data.organizations;
+    for (const orgKey of Object.keys(orgs)) {
+      const topics = orgs[orgKey];
+      for (const topicKey of Object.keys(topics || {})) {
+        const repos: Repository[] = topics[topicKey] || [];
+        for (const repo of repos) {
+          if (repo && typeof repo.id === 'number') {
+            this.preGenIndexById.set(repo.id, repo);
+          }
+        }
+      }
+    }
+  }
+
+  private findRepoInPreGenIndex(id: number): Repository | null {
+    if (!this.preGenIndexById) {
+      return null;
+    }
+    return this.preGenIndexById.get(id) || null;
+  }
+
+  private findRepoInTabCaches(id: number): Repository | null {
+    if (!this.CONF) {
+      return null;
+    }
+    for (const tabKey of Object.keys(this.CONF.tabs)) {
+      const tab = this.CONF.tabs[tabKey];
+      const { org = 'default-org', topic = '' } = tab;
+      const key = `${org}-${topic}`;
+      const item = localStorage.getItem(key);
+      if (!item) continue;
+      const parsed = JSON.parse(item);
+      if (this.expireMinutes(30, parsed.timeDate)) continue;
+      const repos: Repository[] = parsed.value || [];
+      const match = repos.find((r) => r && r.id === Number(id));
+      if (match) {
+        return match;
+      }
+    }
+    return null;
+  }
+
+  private normalizeRepo(repo: Repository): Repository {
+    // Ensure essential fields exist to avoid template issues
+    const safe = { ...repo } as any;
+    if (!safe.owner) {
+      const ownerLogin = typeof safe.full_name === 'string' && safe.full_name.includes('/')
+        ? safe.full_name.split('/')[0]
+        : '';
+      safe.owner = { login: ownerLogin } as any;
+    }
+    safe.subscribers_count = typeof safe.subscribers_count === 'number' ? safe.subscribers_count : 0;
+    safe.stargazers_count = typeof safe.stargazers_count === 'number' ? safe.stargazers_count : 0;
+    safe.forks_count = typeof safe.forks_count === 'number' ? safe.forks_count : 0;
+    safe.created_at = safe.created_at || new Date().toISOString();
+    safe.pushed_at = safe.pushed_at || safe.updated_at || new Date().toISOString();
+    safe.default_branch = safe.default_branch || 'master';
+    return safe as Repository;
   }
 }
