@@ -20,10 +20,11 @@ import { AppConfigService } from './services/config/app-config.service';
 import { APP_CONFIG } from './services/config/config.token';
 
 export function initAppConfig(configService: AppConfigService) {
-  return () => configService.load();
+  // Angular 11 APP_INITIALIZER waits for Promise (not Observable)
+  return () => configService.load().toPromise();
 }
 
-export function provideAppConfig(configService: AppConfigService) {
+export function provideConfig(configService: AppConfigService) {
   return configService.getConfig();
 }
 
@@ -42,8 +43,18 @@ export function provideAppConfig(configService: AppConfigService) {
     MarkdownModule.forRoot(),
   ],
   providers: [
-    { provide: APP_INITIALIZER, useFactory: initAppConfig, deps: [AppConfigService], multi: true },
-    { provide: APP_CONFIG, useFactory: provideAppConfig, deps: [AppConfigService] },
+    AppConfigService,
+    { 
+      provide: APP_INITIALIZER, 
+      useFactory: initAppConfig, 
+      deps: [AppConfigService], 
+      multi: true 
+    },
+    { 
+      provide: APP_CONFIG, 
+      useFactory: provideConfig, 
+      deps: [AppConfigService] 
+    },
   ],
   bootstrap: [AppComponent],
 })
