@@ -13,9 +13,14 @@ exports.config = {
     './src/**/*.e2e-spec.ts'
   ],
   capabilities: {
-    browserName: 'chrome'
+    browserName: 'chrome',
+    chromeOptions: process.env.CI ? {
+      args: ['--headless', '--no-sandbox', '--disable-dev-shm-usage', '--window-size=1280,720']
+    } : {}
   },
   directConnect: true,
+  chromeDriver: '/usr/bin/chromedriver', // Use system chromedriver
+  seleniumAddress: null, // Force direct connection
   baseUrl: 'http://localhost:4200/',
   framework: 'jasmine',
   jasmineNodeOpts: {
