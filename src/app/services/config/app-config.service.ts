@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { Config } from '../catalogue/catalogue.model';
 import { environment } from '../../../environments/environment';

@@ -4,6 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { APP_CONFIG } from '../services/config/config.token';
+import { Config } from '../services/catalogue/catalogue.model';
 
 import { HowtoComponent } from './howto.component';
 
@@ -12,6 +14,16 @@ describe('HowtoComponent', () => {
   let fixture: ComponentFixture<HowtoComponent>;
 
   beforeEach(async () => {
+    const MOCK_CONFIG: Config = {
+      page: 0,
+      perPage: 10,
+      pageSize: 8,
+      globalSearch: true,
+      tabs: {
+        Test: { topic: '', org: '', path: '/test', globalSearch: true },
+      },
+      usePreGeneratedFile: false,
+    };
     await TestBed.configureTestingModule({
       declarations: [HowtoComponent],
       imports: [
@@ -20,6 +32,7 @@ describe('HowtoComponent', () => {
         FontAwesomeModule
       ],
       providers: [
+        { provide: APP_CONFIG, useValue: MOCK_CONFIG },
         {
           provide: ActivatedRoute,
           useValue: {
