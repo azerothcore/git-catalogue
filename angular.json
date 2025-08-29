@@ -85,21 +85,21 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "git-catalogue:build"
+            "buildTarget": "git-catalogue:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "git-catalogue:build:production"
+              "buildTarget": "git-catalogue:build:production"
             },
             "e2e": {
-              "browserTarget": "git-catalogue:build:e2e"
+              "buildTarget": "git-catalogue:build:e2e"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "git-catalogue:build"
+            "buildTarget": "git-catalogue:build"
           }
         },
         "test": {
