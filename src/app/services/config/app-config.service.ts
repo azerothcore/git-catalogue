@@ -43,9 +43,7 @@ export class AppConfigService {
 
   private applyEnvironmentOverrides(cfg: Config): Config {
     const merged = { ...cfg };
-    if (environment.usePreGeneratedFile !== undefined) {
-      merged.usePreGeneratedFile = environment.usePreGeneratedFile;
-    }
+
     return merged;
   }
 }

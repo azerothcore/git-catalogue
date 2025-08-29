@@ -4,7 +4,6 @@
 
 export const environment = {
   production: false,
-  usePreGeneratedFile: false  // Set to true to use pre-generated file instead of GitHub API
 };
 
 /*
