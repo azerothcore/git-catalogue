@@ -123,21 +123,6 @@
               "node_modules/prismjs/prism.js"
             ]
           }
-        },
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
-          "options": {
-            "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "git-catalogue:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "git-catalogue:serve:production"
-            },
-            "e2e": {
-              "devServerTarget": "git-catalogue:serve:e2e"
-            }
-          }
         }
       }
     }
