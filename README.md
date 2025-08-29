@@ -39,7 +39,7 @@ Example:
 4. **Install and run:**
    ```bash
    npm install
-   npm start
+   NODE_OPTIONS="--openssl-legacy-provider" npm run start
    ```
 
 > 📝 **Note**: The `config.json` file is git-ignored, so your local configuration won't conflict with upstream updates.
@@ -50,7 +50,7 @@ This project is written with the Angular framework, to run it locally you can ru
 
 ```bash
 npm install
-npm start
+NODE_OPTIONS="--openssl-legacy-provider" npm run start
 ```
 
 It should work smootly using:
