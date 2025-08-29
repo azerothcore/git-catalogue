@@ -142,7 +142,6 @@
       }
     }
   },
-  "defaultProject": "git-catalogue",
   "cli": {
     "analytics": false
   }
