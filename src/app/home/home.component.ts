@@ -7,8 +7,9 @@ import { Repository } from 'src/@types';
 import { CatalogueService } from '../services/catalogue/catalogue.service';
 
 @Component({
-  selector: 'app-home',
-  templateUrl: './home.component.html',
+    selector: 'app-home',
+    templateUrl: './home.component.html',
+    standalone: false
 })
 export class HomeComponent {
   constructor(public catalogueService: CatalogueService, public cdRef: ChangeDetectorRef, private location: Location) {

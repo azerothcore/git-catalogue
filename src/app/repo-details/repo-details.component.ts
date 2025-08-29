@@ -18,9 +18,10 @@ import { pluck, tap } from 'rxjs/operators';
 import { RepoDetailsData } from '../services/resolvers/repo-details-resolver.service';
 
 @Component({
-  selector: 'app-repo-details',
-  templateUrl: './repo-details.component.html',
-  styleUrls: ['./repo-details.component.scss'],
+    selector: 'app-repo-details',
+    templateUrl: './repo-details.component.html',
+    styleUrls: ['./repo-details.component.scss'],
+    standalone: false
 })
 export class RepoDetailsComponent {
   constructor(private readonly route: ActivatedRoute) {
