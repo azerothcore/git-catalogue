@@ -18,7 +18,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '14'
+          node-version: '18'
+
+      - name: Show Node/npm versions
+        run: |
+          node -v
+          npm -v
 
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1
@@ -71,4 +76,3 @@ jobs:
 
       - name: Run E2E tests (Protractor, headless)
         run: npm run e2e -- --configuration=e2e
-
