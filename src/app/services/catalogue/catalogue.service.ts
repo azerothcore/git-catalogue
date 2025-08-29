@@ -5,6 +5,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map, reduce, tap } from 'rxjs/operators';
 import { RepositoriesPage, Repository } from 'src/@types';
 import { Config, Tab } from './catalogue.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -13,20 +14,52 @@ export class CatalogueService {
   CONF: Config;
   items$: Record<string, Observable<Repository[]>> = {};
 
-  private configURL = 'assets/default.json';
+  private configURLs = ['assets/config.json', 'assets/config.default.json'];
 
   constructor(private http: HttpClient, private route: ActivatedRoute) {
-    this.http.get<Config>(this.configURL).subscribe((config: Config) => {
-      this.CONF = config;
+    this.loadConfiguration();
+  }
 
-      for (const k of Object.keys(this.CONF.tabs)) {
-        this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
+  private loadConfiguration(): void {
+    this.tryLoadConfig(0);
+  }
+
+  private tryLoadConfig(index: number): void {
+    if (index >= this.configURLs.length) {
+      console.error('No configuration file found');
+      return;
+    }
+
+    const configURL = this.configURLs[index];
+    this.http.get<Config>(configURL).subscribe({
+      next: (config: Config) => {
+        this.CONF = config;
+        
+        // Override with environment setting if available
+        if (environment.usePreGeneratedFile !== undefined) {
+          this.CONF.usePreGeneratedFile = environment.usePreGeneratedFile;
+        }
+
+        console.log(`Loaded configuration from ${configURL}`);
+        
+        // Initialize items after config is loaded
+        for (const k of Object.keys(this.CONF.tabs)) {
+          this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
+        }
+      },
+      error: (error) => {
+        if (error.status === 404) {
+          console.log(`Configuration file ${configURL} not found, trying next...`);
+          this.tryLoadConfig(index + 1);
+        } else {
+          console.error(`Error loading configuration from ${configURL}:`, error);
+        }
       }
     });
   }
 
   private getLocalItems(tab: Tab): Observable<Repository[]> {
-    const { org = '', topic = '' } = tab;
+    const { org = 'default-org', topic = '' } = tab;
     const key = `${org}-${topic}`;
     const item = localStorage.getItem(key);
 
@@ -34,8 +67,43 @@ export class CatalogueService {
       return of(JSON.parse(item).value);
     }
 
+    // Check if we should use pre-generated file
+    if (this.CONF?.usePreGeneratedFile) {
+      return this.getItemsFromPreGeneratedFile(org, topic, key);
+    }
+
+    // Use original API method
+    return this.getItemsFromAPI(org, topic, key);
+  }
+
+  private getItemsFromPreGeneratedFile(org: string, topic: string, key: string): Observable<Repository[]> {
+    const fileUrl = this.CONF.preGeneratedFileUrl || 'data/catalogue.json';
+    
+    return this.http.get<any>(fileUrl).pipe(
+      map(data => {
+        // Navigate the JSON structure: organizations -> org -> topic
+        if (data.organizations && data.organizations[org] && data.organizations[org][topic]) {
+          return data.organizations[org][topic];
+        }
+        return [];
+      }),
+      tap(repos => this.cacheRepos(key, repos)),
+      catchError(error => {
+        console.warn('Failed to fetch from pre-generated file, falling back to API', error);
+        return this.getItemsFromAPI(org, topic, key);
+      })
+    );
+  }
+
+  private getItemsFromAPI(org: string, topic: string, key: string): Observable<Repository[]> {
     const topicFilter = topic ? `+topic:${topic}` : '';
-    const orgFilter = org ? `org:${org}+` : '';
+    
+    // Check if this tab should use global search
+    const tab = Object.values(this.CONF.tabs).find(t => t.org === org && t.topic === topic);
+    const useGlobalSearch = tab?.globalSearch ?? this.CONF.globalSearch ?? false;
+    
+    // Only include org filter if not using global search
+    const orgFilter = useGlobalSearch ? '' : (org ? `org:${org}+` : '');
 
     const perPage = this.CONF.perPage;
     let totalSize = null;
@@ -71,6 +139,10 @@ export class CatalogueService {
     }).pipe(reduce((acc, val) => acc.concat(val), []));
 
     return this.cacheable(pages$, key);
+  }
+
+  private cacheRepos(key: string, repos: Repository[]) {
+    localStorage.setItem(key, JSON.stringify({ timeDate: new Date().getTime(), value: repos }));
   }
 
   cacheable<T extends Repository | Repository[]>(obs: Observable<T>, key: string): Observable<T> {
@@ -139,5 +211,41 @@ export class CatalogueService {
             .pipe(catchError(() => of('No README found'))),
         ),
       );
+  }
+
+  // New methods for managing data source mode
+  toggleDataSource(): void {
+    if (this.CONF) {
+      this.CONF.usePreGeneratedFile = !this.CONF.usePreGeneratedFile;
+      this.clearCache();
+      this.refreshItems();
+    }
+  }
+
+  setDataSource(usePreGeneratedFile: boolean): void {
+    if (this.CONF) {
+      this.CONF.usePreGeneratedFile = usePreGeneratedFile;
+      this.clearCache();
+      this.refreshItems();
+    }
+  }
+
+  isUsingPreGeneratedFile(): boolean {
+    return this.CONF?.usePreGeneratedFile || false;
+  }
+
+  private clearCache(): void {
+    for (const tabKey of Object.keys(this.CONF.tabs)) {
+      const tab = this.CONF.tabs[tabKey];
+      const { org = 'default-org', topic = '' } = tab;
+      const key = `${org}-${topic}`;
+      localStorage.removeItem(key);
+    };
+  }
+
+  private refreshItems(): void {
+    for (const k of Object.keys(this.CONF.tabs)) {
+      this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
+    }
   }
 }
