@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI: true
+      NODE_OPTIONS: --openssl-legacy-provider
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,8 +72,5 @@ jobs:
       - name: Run unit tests (headless)
         run: npm run test-ci -- --browsers=ChromeHeadless
 
-      - name: Update WebDriver
-        run: node ./node_modules/protractor/bin/webdriver-manager update --gecko=false --standalone=false
-
       - name: Run E2E tests (Protractor, headless)
-        run: npm run e2e -- --configuration=e2e
+        run: npm run e2e -- --configuration=e2e --webdriver-update=false

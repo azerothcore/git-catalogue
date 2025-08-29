@@ -19,6 +19,8 @@ exports.config = {
     } : {}
   },
   directConnect: true,
+  chromeDriver: '/usr/bin/chromedriver', // Use system chromedriver
+  seleniumAddress: null, // Force direct connection
   baseUrl: 'http://localhost:4200/',
   framework: 'jasmine',
   jasmineNodeOpts: {
