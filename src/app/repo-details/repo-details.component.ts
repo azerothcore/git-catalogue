@@ -27,7 +27,9 @@ export class RepoDetailsComponent {
   constructor(private readonly route: ActivatedRoute) {
     this.data$ = route.data.pipe(pluck('data')).pipe(
       tap((data) => {
-        window.parent.document.title = data.repo.name;
+        if (data && data.repo) {
+          window.parent.document.title = data.repo.name;
+        }
       }),
     );
   }
