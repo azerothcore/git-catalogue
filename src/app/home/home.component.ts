@@ -1,7 +1,7 @@
 import { Location } from '@angular/common';
 import { ChangeDetectorRef, Component } from '@angular/core';
-import { LegacyPageEvent as PageEvent } from '@angular/material/legacy-paginator';
-import { MatLegacyTabChangeEvent as MatTabChangeEvent } from '@angular/material/legacy-tabs';
+import { PageEvent } from '@angular/material/paginator';
+import { MatTabChangeEvent } from '@angular/material/tabs';
 import { faSearch, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { Repository } from 'src/@types';
 import { CatalogueService } from '../services/catalogue/catalogue.service';
