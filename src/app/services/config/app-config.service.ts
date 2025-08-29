@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { take } from 'rxjs/operators';
+import { EMPTY, Observable, concat, defer, throwError } from 'rxjs';
+import { catchError, map, take, tap } from 'rxjs/operators';
 import { Config } from '../catalogue/catalogue.model';
 import { environment } from '../../../environments/environment';
 
@@ -11,23 +12,26 @@ export class AppConfigService {
 
   constructor(private http: HttpClient) {}
 
-  async load(): Promise<void> {
-    // Try config files in order; stop on first success
-    for (const url of this.configURLs) {
-      try {
-        const cfg = await this.http.get<Config>(url).pipe(take(1)).toPromise();
-        this.config = this.applyEnvironmentOverrides(cfg);
-        return;
-      } catch (err: any) {
-        if (err?.status === 404) {
-          continue;
-        }
-        // For non-404 errors, rethrow to fail fast
-        throw err;
-      }
-    }
-    // If none found, throw to surface configuration issue
-    throw new Error('No configuration file found (assets/config.json or assets/config.default.json)');
+  load(): Observable<void> {
+    const attempts = this.configURLs.map((url) =>
+      this.http.get<Config>(url).pipe(
+        take(1),
+        map((cfg) => this.applyEnvironmentOverrides(cfg)),
+        tap((cfg) => (this.config = cfg)),
+        map(() => void 0),
+        catchError((err) => {
+          if (err?.status === 404) {
+            return EMPTY; // try next URL
+          }
+          return throwError(err);
+        }),
+      ),
+    );
+
+    return concat(
+      ...attempts,
+      defer(() => throwError(new Error('No configuration file found (assets/config.json or assets/config.default.json)'))),
+    ).pipe(take(1));
   }
 
   getConfig(): Config {
