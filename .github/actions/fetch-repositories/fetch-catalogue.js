@@ -211,8 +211,6 @@ class CatalogueFetcher {
           forks_count: repo.forks_count,
           watchers_count: repo.watchers_count,
           subscribers_count: repo.subscribers_count, // Sometimes used instead of watchers_count
-          pushed_at: new Date(repo.pushed_at),
-          updated_at: new Date(repo.updated_at),
           
           // Optional fields
           license: repo.license ? {
