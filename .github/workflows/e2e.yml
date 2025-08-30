@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI: true
-      NODE_OPTIONS: --openssl-legacy-provider
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Show Node/npm versions
         run: |
@@ -28,6 +27,12 @@ jobs:
 
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Set Playwright Chrome executable for CI
+        run: echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/google-chrome" >> $GITHUB_ENV
 
       - name: Cache npm
         uses: actions/cache@v4
@@ -72,5 +77,5 @@ jobs:
       - name: Run unit tests (headless)
         run: npm run test-ci -- --browsers=ChromeHeadless
 
-      - name: Run E2E tests (Protractor, headless)
-        run: npm run e2e -- --configuration=e2e --webdriver-update=false
+      - name: Run E2E tests (Playwright)
+        run: npm run e2e
