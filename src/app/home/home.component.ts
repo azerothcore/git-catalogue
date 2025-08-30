@@ -23,6 +23,12 @@ export class HomeComponent {
     this.cdRef.detectChanges();
   }
 
+  onSearchChange(value: string): void {
+    // Ensure we reset to the first page when the search term changes
+    this.page = 0;
+    this.refresh();
+  }
+
   onPageChange(page: PageEvent): void {
     this.page = page.pageIndex;
   }
@@ -43,5 +49,12 @@ export class HomeComponent {
       filteredItems = filteredItems.filter((item) => item.name.toLowerCase().indexOf(this.search.toLowerCase()) > -1);
     }
     return filteredItems.slice(this.catalogueService.CONF.pageSize * this.page, this.catalogueService.CONF.pageSize * (this.page + 1));
+  }
+
+  filteredLength(modules: Repository[]): number {
+    if (!this.search) {
+      return modules.length;
+    }
+    return modules.filter((item) => item.name.toLowerCase().indexOf(this.search.toLowerCase()) > -1).length;
   }
 }

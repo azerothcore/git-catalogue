@@ -13,7 +13,7 @@
         class="form-control"
         placeholder="Search an item in the catalogue"
         [(ngModel)]="search"
-        (ngModelChange)="refresh()"
+        (ngModelChange)="onSearchChange($event)"
         aria-label="Search"
         aria-describedby="search"
       />
@@ -46,7 +46,7 @@
 
           <mat-paginator
             [pageIndex]="page"
-            [length]="items.length"
+            [length]="filteredLength(items)"
             [pageSize]="catalogueService.CONF.pageSize"
             (page)="onPageChange($event)"
             [hidePageSize]="true"
