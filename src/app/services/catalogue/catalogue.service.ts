@@ -324,7 +324,10 @@ export class CatalogueService {
     safe.stargazers_count = typeof safe.stargazers_count === 'number' ? safe.stargazers_count : 0;
     safe.forks_count = typeof safe.forks_count === 'number' ? safe.forks_count : 0;
     safe.created_at = safe.created_at || new Date().toISOString();
-    safe.pushed_at = safe.pushed_at || safe.updated_at || new Date().toISOString();
+    // when it's pregenerated we cannot show these fields because they are not always up-to-date
+    if (!this.isUsingPreGeneratedFile()) {
+      safe.pushed_at = safe.pushed_at || safe.updated_at || new Date().toISOString();
+    }
     safe.default_branch = safe.default_branch || 'master';
     return safe as Repository;
   }
