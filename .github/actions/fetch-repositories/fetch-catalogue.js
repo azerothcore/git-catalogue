@@ -54,9 +54,8 @@ class CatalogueFetcher {
       forks_count: repo.forks_count,
       watchers_count: repo.watchers_count,
       subscribers_count: repo.subscribers_count,
-      // when it's pregenerated we cannot store these fields because they change too often
-      // pushed_at: repo.pushed_at,
-      // updated_at: repo.updated_at,
+      pushed_at: repo.pushed_at,
+      updated_at: repo.updated_at,
       license: license,
       topics
     };
