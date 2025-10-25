@@ -18,15 +18,18 @@ import { pluck, tap } from 'rxjs/operators';
 import { RepoDetailsData } from '../services/resolvers/repo-details-resolver.service';
 
 @Component({
-  selector: 'app-repo-details',
-  templateUrl: './repo-details.component.html',
-  styleUrls: ['./repo-details.component.scss'],
+    selector: 'app-repo-details',
+    templateUrl: './repo-details.component.html',
+    styleUrls: ['./repo-details.component.scss'],
+    standalone: false
 })
 export class RepoDetailsComponent {
   constructor(private readonly route: ActivatedRoute) {
     this.data$ = route.data.pipe(pluck('data')).pipe(
       tap((data) => {
-        window.parent.document.title = data.repo.name;
+        if (data && data.repo) {
+          window.parent.document.title = data.repo.name;
+        }
       }),
     );
   }

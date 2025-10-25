@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -8,6 +8,7 @@ import { APP_CONFIG } from '../services/config/config.token';
 import { Config } from '../services/catalogue/catalogue.model';
 
 import { HowtoComponent } from './howto.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('HowtoComponent', () => {
   let component: HowtoComponent;
@@ -25,27 +26,26 @@ describe('HowtoComponent', () => {
       usePreGeneratedFile: false,
     };
     await TestBed.configureTestingModule({
-      declarations: [HowtoComponent],
-      imports: [
-        HttpClientTestingModule,
-        RouterTestingModule,
-        FontAwesomeModule
-      ],
-      providers: [
+    declarations: [HowtoComponent],
+    schemas: [NO_ERRORS_SCHEMA],
+    imports: [RouterTestingModule,
+        FontAwesomeModule],
+    providers: [
         { provide: APP_CONFIG, useValue: MOCK_CONFIG },
         {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              paramMap: {
-                get: () => null
-              }
+            provide: ActivatedRoute,
+            useValue: {
+                snapshot: {
+                    paramMap: {
+                        get: () => null
+                    }
+                }
             }
-          }
-        }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
-    }).compileComponents();
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+}).compileComponents();
   });
 
   beforeEach(() => {

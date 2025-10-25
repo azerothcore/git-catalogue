@@ -1,9 +1,10 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { CatalogueService } from './catalogue.service';
 import { APP_CONFIG } from '../config/config.token';
 import { Config } from './catalogue.model';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('CatalogueService', () => {
   let service: CatalogueService;
@@ -20,21 +21,23 @@ describe('CatalogueService', () => {
       usePreGeneratedFile: false,
     };
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [
+    imports: [],
+    providers: [
         { provide: APP_CONFIG, useValue: MOCK_CONFIG },
         {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              paramMap: {
-                get: () => null
-              }
+            provide: ActivatedRoute,
+            useValue: {
+                snapshot: {
+                    paramMap: {
+                        get: () => null
+                    }
+                }
             }
-          }
-        }
-      ]
-    });
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+});
     service = TestBed.inject(CatalogueService);
   });
 

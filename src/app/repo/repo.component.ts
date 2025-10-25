@@ -2,9 +2,10 @@ import { Component, Input } from '@angular/core';
 import { faStar, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-  selector: 'app-repo',
-  templateUrl: './repo.component.html',
-  styleUrls: ['./repo.component.scss'],
+    selector: 'app-repo',
+    templateUrl: './repo.component.html',
+    styleUrls: ['./repo.component.scss'],
+    standalone: false
 })
 export class RepoComponent {
   @Input() id: number;

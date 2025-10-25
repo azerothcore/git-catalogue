@@ -4,7 +4,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { AppComponent } from './app.component';
 import { RepoComponent } from './repo/repo.component';
 import { MomentModule } from 'ngx-moment';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -28,34 +28,28 @@ export function provideConfig(configService: AppConfigService) {
   return configService.getConfig();
 }
 
-@NgModule({
-  declarations: [AppComponent, RepoComponent, RepoDetailsComponent, HomeComponent, HowtoComponent, CatalogueComponent, EmojiFixupPipe],
-  imports: [
-    FormsModule,
-    BrowserModule,
-    AppRoutingModule,
-    FontAwesomeModule,
-    MomentModule,
-    HttpClientModule,
-    BrowserAnimationsModule,
-    MatPaginatorModule,
-    MatTabsModule,
-    MarkdownModule.forRoot(),
-  ],
-  providers: [
-    AppConfigService,
-    { 
-      provide: APP_INITIALIZER, 
-      useFactory: initAppConfig, 
-      deps: [AppConfigService], 
-      multi: true 
-    },
-    { 
-      provide: APP_CONFIG, 
-      useFactory: provideConfig, 
-      deps: [AppConfigService] 
-    },
-  ],
-  bootstrap: [AppComponent],
-})
+@NgModule({ declarations: [AppComponent, RepoComponent, RepoDetailsComponent, HomeComponent, HowtoComponent, CatalogueComponent, EmojiFixupPipe],
+    bootstrap: [AppComponent], imports: [FormsModule,
+        BrowserModule,
+        AppRoutingModule,
+        FontAwesomeModule,
+        MomentModule,
+        BrowserAnimationsModule,
+        MatPaginatorModule,
+        MatTabsModule,
+        MarkdownModule.forRoot()], providers: [
+        AppConfigService,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: initAppConfig,
+            deps: [AppConfigService],
+            multi: true
+        },
+        {
+            provide: APP_CONFIG,
+            useFactory: provideConfig,
+            deps: [AppConfigService]
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+    ] })
 export class AppModule {}

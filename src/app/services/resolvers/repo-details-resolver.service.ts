@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { Repository } from 'src/@types';
@@ -14,7 +14,7 @@ export type RepoDetailsData = {
 @Injectable({
   providedIn: 'root',
 })
-export class RepoDetailsResolverService implements Resolve<RepoDetailsData> {
+export class RepoDetailsResolverService  {
 
   constructor(private readonly catalogueService: CatalogueService) {
   }
