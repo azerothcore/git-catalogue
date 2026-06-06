@@ -2,9 +2,9 @@ name: E2E
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ '**' ]
+    branches: ['**']
 
 jobs:
   test-e2e:
@@ -28,9 +28,6 @@ jobs:
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1
 
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
-
       - name: Set Playwright Chrome executable for CI
         run: echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/google-chrome" >> $GITHUB_ENV
 
@@ -44,6 +41,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
 
       - name: Prepare E2E config and data fixtures
         run: |

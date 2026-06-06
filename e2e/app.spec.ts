@@ -3,17 +3,11 @@ import { test, expect } from '@playwright/test';
 test.describe('Git Catalogue App', () => {
   
   test('should load the application', async ({ page }) => {
-    // Navigate to the application
     await page.goto('/');
-    
-    // Wait for the page to load
-    await page.waitForLoadState('networkidle');
-    
-    // Check that the page loaded successfully by looking for Angular content
-    // The app should have loaded without critical errors
+
+    // Web-first assertions auto-wait; avoid networkidle, which hangs on the
+    // external Google Fonts CDN and makes this flaky on CI.
     await expect(page).toHaveTitle('GitCatalogue');
-    
-    // Check that the main app component is present
     await expect(page.locator('app-root')).toBeVisible();
   });
 
@@ -37,13 +31,12 @@ test.describe('Git Catalogue App', () => {
       }
     });
     
-    // Navigate to the application
     await page.goto('/');
-    
-    // Wait for the page to fully load
-    await page.waitForLoadState('networkidle');
-    
-    // Assert that there are no critical console errors
+
+    // Wait for Angular to bootstrap rather than networkidle, which never
+    // settles when the external Google Fonts CDN stalls on CI.
+    await expect(page.locator('app-root')).toBeVisible();
+
     expect(errors).toEqual([]);
   });
 });
