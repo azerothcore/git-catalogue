@@ -28,9 +28,6 @@ jobs:
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1
 
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
-
       - name: Set Playwright Chrome executable for CI
         run: echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/google-chrome" >> $GITHUB_ENV
 
@@ -44,6 +41,13 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+
+      # Must run after `npm ci` so npx resolves the project's pinned
+      # @playwright/test and installs the matching browser build. Running it
+      # before `npm ci` makes npx fetch the latest Playwright and install a
+      # browser revision the pinned version can't find at test time.
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
 
       - name: Prepare E2E config and data fixtures
         run: |
