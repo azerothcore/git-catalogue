@@ -17,6 +17,8 @@ import { Observable } from 'rxjs';
 import { pluck, tap } from 'rxjs/operators';
 import { RepoDetailsData } from '../services/resolvers/repo-details-resolver.service';
 
+const RETURN_HASH_STORAGE_KEY = 'azerothcore.catalogue.returnHash';
+
 @Component({
     selector: 'app-repo-details',
     templateUrl: './repo-details.component.html',
@@ -45,6 +47,18 @@ export class RepoDetailsComponent {
   readonly faClock = faClock;
   readonly faBalanceScale = faBalanceScale;
   readonly faSync = faSync;
+  readonly returnHash = this.readReturnHash();
 
   data$: Observable<RepoDetailsData>;
+
+  private readReturnHash(): string {
+    try {
+      const returnHash = sessionStorage.getItem(RETURN_HASH_STORAGE_KEY);
+      if (returnHash && returnHash.indexOf('#/') === 0 && returnHash.indexOf('#/details/') !== 0) {
+        return returnHash;
+      }
+    } catch (error) {}
+
+    return '#/home';
+  }
 }

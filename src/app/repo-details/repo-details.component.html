@@ -1,4 +1,4 @@
-<a href="#/home"><fa-icon [icon]="faCaretLeft"></fa-icon> &nbsp; back to Catalogue</a>
+<a [href]="returnHash"><fa-icon [icon]="faCaretLeft"></fa-icon> &nbsp; back to Catalogue</a>
 
 <div *ngIf="data$ | async as data" class="mt-3">
   <div class="media">
