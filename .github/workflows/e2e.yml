@@ -2,9 +2,9 @@ name: E2E
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ '**' ]
+    branches: ['**']
 
 jobs:
   test-e2e:
@@ -42,10 +42,6 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
-      # Must run after `npm ci` so npx resolves the project's pinned
-      # @playwright/test and installs the matching browser build. Running it
-      # before `npm ci` makes npx fetch the latest Playwright and install a
-      # browser revision the pinned version can't find at test time.
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
