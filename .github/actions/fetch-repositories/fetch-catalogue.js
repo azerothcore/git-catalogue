@@ -170,7 +170,7 @@ class CatalogueFetcher {
         query += 'fork:true ';
       }
       if (topic) {
-        // Handle compound topics like "azerothcore-module+ac-premium"
+        // Handle compound topics like "azerothcore-module+azerothcore-lua"
         if (topic.includes('+')) {
           const topics = topic.split('+');
           topics.forEach(t => {

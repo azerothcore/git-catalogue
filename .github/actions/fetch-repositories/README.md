@@ -172,7 +172,7 @@ global-search: 'false'
 
 ### Complex Topic Combinations
 ```yaml
-topics: '{"azerothcore": ["azerothcore-module+ac-premium", "azerothcore-tools"]}'
+topics: '{"azerothcore": ["azerothcore-module+azerothcore-lua", "azerothcore-tools"]}'
 global-search: 'true'  # Finds repositories with these topics across all of GitHub
 ```
 

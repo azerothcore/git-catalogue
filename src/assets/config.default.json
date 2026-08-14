@@ -10,11 +10,6 @@
       "org": "your-org",
       "path": "/module"
     },
-    "Premium Modules": {
-      "topic": "your-project-module+premium",
-      "org": "your-org",
-      "path": "/module+premium"
-    },
     "Tools": {
       "topic": "your-project-tools",
       "org": "your-org",

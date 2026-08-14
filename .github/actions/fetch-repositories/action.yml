@@ -8,7 +8,7 @@ inputs:
   topics:
     description: 'JSON object mapping organizations to their topics'
     required: true
-    default: '{"azerothcore": ["azerothcore-module", "azerothcore-module+ac-premium", "azerothcore-tools", "azerothcore-lua", "azerothcore-sql"]}'
+    default: '{"azerothcore": ["azerothcore-module", "azerothcore-tools", "azerothcore-lua", "azerothcore-sql"]}'
   global-search:
     description: 'Whether to search globally across GitHub (true) or restrict to specified organizations (false)'
     default: 'true'
