@@ -12,6 +12,7 @@ export class RepoComponent {
   @Input() name: string;
   @Input() stars: number;
   @Input() created: Date;
+  @Input() updated: Date;
   @Input() description: string;
   @Input() fullName: string;
 

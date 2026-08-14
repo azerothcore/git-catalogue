@@ -18,6 +18,12 @@
         aria-describedby="search"
       />
     </div>
+
+    <label for="sort">Sort items by:</label>
+
+    <select id="sort" class="form-control mb-3" [(ngModel)]="sort" (ngModelChange)="onSortChange($event)" aria-label="Sort">
+      <option *ngFor="let option of sortOptions" [value]="option.key">{{ option.label }}</option>
+    </select>
   </div>
 
   <div class="col-6">
@@ -38,6 +44,7 @@
               [name]="item.name"
               [stars]="item.stargazers_count"
               [created]="item.created_at"
+              [updated]="item.pushed_at"
               [description]="item.description"
               [fullName]="item.full_name"
             >
