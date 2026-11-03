@@ -5,7 +5,9 @@ import {
   faBalanceScale,
   faCaretLeft,
   faClock,
+  faCode,
   faCodeBranch,
+  faExclamationCircle,
   faExternalLinkAlt,
   faEye,
   faGlobe,
@@ -47,6 +49,8 @@ export class RepoDetailsComponent {
   readonly faClock = faClock;
   readonly faBalanceScale = faBalanceScale;
   readonly faSync = faSync;
+  readonly faCode = faCode;
+  readonly faExclamationCircle = faExclamationCircle;
   readonly returnHash = this.readReturnHash();
 
   data$: Observable<RepoDetailsData>;

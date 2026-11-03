@@ -1,67 +1,129 @@
-<a [href]="returnHash"><fa-icon [icon]="faCaretLeft"></fa-icon> &nbsp; back to Catalogue</a>
+<div class="details">
+  <a class="back-link" [href]="returnHash">
+    <fa-icon [icon]="faCaretLeft"></fa-icon>
+    Back to catalogue
+  </a>
 
-<div *ngIf="data$ | async as data" class="mt-3">
-  <div class="media">
-    <img
-      [src]="data.logo"
-      alt="{{ data.repo.full_name }}"
-      class="mr-3 logo-small logo"
-      (error)="data.logo = 'https://avatars0.githubusercontent.com/u/20147732?v=4'"
-    />
-    <div class="media-body">
-      <h2 class="mt-0 mb-0">{{ data.repo.name }}</h2>
-      <p>
-        by <a href="https://github.com/{{ data.repo.owner.login }}">{{ data.repo.owner.login }}</a>
-      </p>
-    </div>
-  </div>
+  <ng-container *ngIf="data$ | async as data">
+    <header class="repo-hero">
+      <img
+        class="repo-hero-logo"
+        [src]="data.logo"
+        [alt]="data.repo.full_name"
+        (error)="data.logo = 'https://avatars0.githubusercontent.com/u/20147732?v=4'"
+      />
 
-  <div class="row">
-    <div id="readme-markdown" class="col-12 col-md-8">
-      <markdown>
-        {{ data.readme | emojiFixup }}
-      </markdown>
-    </div>
-    <div class="col-12 col-md-4">
-      <div id="about">
-        <a class="btn btn-lg btn-success" target="_blank" href="{{ data.repo.html_url }}/archive/{{ data.repo.default_branch }}.zip"
-          >Download <i class="fa fa-download"></i
-        ></a>
+      <div class="repo-hero-body">
+        <div class="repo-hero-title">
+          <h1>{{ data.repo.name }}</h1>
+          <span class="repo-hero-owner">
+            by
+            <a [href]="'https://github.com/' + data.repo.owner.login" target="_blank" rel="noopener">{{ data.repo.owner.login }}</a>
+          </span>
+        </div>
 
-        <h3 class="mt-3">About this repo</h3>
-        <ul class="list-unstyled">
-          <li>
-            <fa-icon [icon]="faGlobe"></fa-icon> Repo ID: <span class="float-right">{{ data.repo.id }}</span>
-          </li>
-          <li>
-            <fa-icon [icon]="faUserCircle"></fa-icon> Author: <span class="float-right">{{ data.repo.owner.login }}</span>
-          </li>
-          <li>
-            <fa-icon [icon]="faGithub"></fa-icon> Repo:
-            <a class="float-right" target="_blank" href="{{ data.repo.html_url }}"
-              >View on Github <fa-icon [icon]="faExternalLinkAlt"></fa-icon
-            ></a>
-          </li>
-          <li>
-            <fa-icon [icon]="faEye"></fa-icon> Watchers: <span class="float-right">{{ data.repo.subscribers_count }}</span>
-          </li>
-          <li>
-            <fa-icon [icon]="faStar"></fa-icon> Stars: <span class="float-right">{{ data.repo.stargazers_count }}</span>
-          </li>
-          <li>
-            <fa-icon [icon]="faCodeBranch"></fa-icon> Forks: <span class="float-right">{{ data.repo.forks_count }}</span>
-          </li>
-          <li>
-            <fa-icon [icon]="faClock"></fa-icon> Created: <span class="float-right">{{ data.repo.created_at | amTimeAgo }}</span>
-          </li>
-          <li>
-            <fa-icon [icon]="faSync"></fa-icon> Last update: <span class="float-right">{{ data.repo.pushed_at | amTimeAgo }}</span>
-          </li>
-          <li *ngIf="data.repo?.license">
-            <fa-icon [icon]="faBalanceScale"></fa-icon> License: <span class="float-right">{{ data.repo.license.spdx_id }}</span>
-          </li>
-        </ul>
+        <p class="repo-hero-description" *ngIf="data.repo.description">{{ data.repo.description }}</p>
+
+        <div class="repo-topics" *ngIf="data.repo.topics?.length">
+          <span class="badge" *ngFor="let topic of data.repo.topics">{{ topic }}</span>
+        </div>
       </div>
+
+      <div class="repo-hero-actions">
+        <a class="btn btn-dark" [href]="data.repo.html_url" target="_blank" rel="noopener">
+          <fa-icon [icon]="faGithub"></fa-icon>
+          GitHub
+        </a>
+        <a
+          class="btn btn-outline-secondary"
+          [href]="data.repo.html_url + '/archive/' + data.repo.default_branch + '.zip'"
+          target="_blank"
+          rel="noopener"
+        >
+          Download ZIP
+        </a>
+      </div>
+    </header>
+
+    <section class="stats" aria-label="Repository stats">
+      <div class="stat">
+        <span class="stat-value">{{ data.repo.stargazers_count }}</span>
+        <span class="stat-label"><fa-icon [icon]="faStar"></fa-icon> Stars</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">{{ data.repo.forks_count }}</span>
+        <span class="stat-label"><fa-icon [icon]="faCodeBranch"></fa-icon> Forks</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">{{ data.repo.subscribers_count }}</span>
+        <span class="stat-label"><fa-icon [icon]="faEye"></fa-icon> Watchers</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">{{ data.repo.open_issues_count }}</span>
+        <span class="stat-label"><fa-icon [icon]="faExclamationCircle"></fa-icon> Open issues</span>
+      </div>
+      <div class="stat" *ngIf="data.repo.language">
+        <span class="stat-value">{{ data.repo.language }}</span>
+        <span class="stat-label"><fa-icon [icon]="faCode"></fa-icon> Language</span>
+      </div>
+      <div class="stat" *ngIf="data.repo.license">
+        <span class="stat-value">{{ data.repo.license.spdx_id }}</span>
+        <span class="stat-label"><fa-icon [icon]="faBalanceScale"></fa-icon> License</span>
+      </div>
+    </section>
+
+    <div class="details-layout">
+      <article class="card readme-card">
+        <h2 class="section-title">README</h2>
+        <div id="readme-markdown" class="markdown-body">
+          <markdown>
+            {{ data.readme | emojiFixup }}
+          </markdown>
+        </div>
+      </article>
+
+      <aside class="card about-card">
+        <h2 class="section-title">About</h2>
+
+        <dl class="about-list">
+          <div>
+            <dt>Repository</dt>
+            <dd>
+              <a [href]="data.repo.html_url" target="_blank" rel="noopener">{{ data.repo.full_name }}</a>
+            </dd>
+          </div>
+          <div>
+            <dt>Owner</dt>
+            <dd>
+              <a [href]="'https://github.com/' + data.repo.owner.login" target="_blank" rel="noopener">{{ data.repo.owner.login }}</a>
+            </dd>
+          </div>
+          <div>
+            <dt>Default branch</dt>
+            <dd>{{ data.repo.default_branch }}</dd>
+          </div>
+          <div>
+            <dt>Created</dt>
+            <dd>{{ data.repo.created_at | amTimeAgo }}</dd>
+          </div>
+          <div>
+            <dt>Last update</dt>
+            <dd>{{ data.repo.pushed_at | amTimeAgo }}</dd>
+          </div>
+          <div *ngIf="data.repo.homepage">
+            <dt>Homepage</dt>
+            <dd>
+              <a [href]="data.repo.homepage" target="_blank" rel="noopener">{{ data.repo.homepage }}</a>
+            </dd>
+          </div>
+          <div *ngIf="data.repo.license">
+            <dt>License</dt>
+            <dd>{{ data.repo.license.spdx_id }}</dd>
+          </div>
+        </dl>
+
+        <a class="btn btn-outline-primary btn-block" [href]="data.repo.html_url" target="_blank" rel="noopener">Open on GitHub</a>
+      </aside>
     </div>
-  </div>
+  </ng-container>
 </div>
