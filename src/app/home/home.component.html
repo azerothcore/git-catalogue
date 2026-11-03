@@ -1,7 +1,10 @@
-<section class="catalogue">
-  <header class="catalogue-toolbar">
-    <div class="catalogue-search">
-      <label class="sr-only" for="search-input">Search the catalogue</label>
+<section class="catalogue-v2">
+  <header class="masthead">
+    <p class="eyebrow"><span class="eyebrow-text">AzerothCore · Catalogue</span></p>
+    <h1>Modules, tools and scripts<br />for your server.</h1>
+    <p class="lede">Browse everything the community maintains. Search by name, description or topic.</p>
+
+    <div class="search-row">
       <div class="search-box">
         <fa-icon class="search-icon" [icon]="faSearch" aria-hidden="true"></fa-icon>
         <input
@@ -14,7 +17,7 @@
           [(ngModel)]="search"
           (ngModelChange)="onSearchChange($event)"
           (keydown.escape)="clearSearch()"
-          placeholder="Search by name, description, topic or author…"
+          placeholder="Search the catalogue…"
           aria-label="Search by name, description, topic or author"
           autocomplete="off"
           spellcheck="false"
@@ -24,19 +27,48 @@
         </button>
         <kbd *ngIf="!search" class="search-hint" aria-hidden="true">/</kbd>
       </div>
-    </div>
 
-    <div class="catalogue-sort">
-      <label for="sort">Sort</label>
-      <select id="sort" [(ngModel)]="sort" (ngModelChange)="onSortChange($event)" aria-label="Sort repositories">
-        <option *ngFor="let option of sortOptions" [value]="option.key">{{ option.label }}</option>
-      </select>
+      <div class="toolbar-actions">
+        <button
+          type="button"
+          class="filter-toggle"
+          [class.is-active]="filtersOpen || activeFilterCount > 0"
+          [attr.aria-expanded]="filtersOpen"
+          aria-controls="filters-panel"
+          (click)="toggleFilters()"
+        >
+          <fa-icon [icon]="faFilter" aria-hidden="true"></fa-icon>
+          <span>Filters</span>
+          <span class="filter-badge" *ngIf="activeFilterCount">{{ activeFilterCount }}</span>
+        </button>
+
+        <div class="sort-box">
+          <fa-icon class="sort-icon" [icon]="faSortAmountDown" aria-hidden="true"></fa-icon>
+          <select id="sort" [(ngModel)]="sort" (ngModelChange)="onSortChange($event)" aria-label="Sort repositories">
+            <option *ngFor="let option of sortOptions" [value]="option.key">{{ option.label }}</option>
+          </select>
+        </div>
+      </div>
     </div>
   </header>
 
-  <p class="catalogue-hint">Can't find a repository? <a href="#/how-to">Check how to add it</a>.</p>
+  <p class="submit-line">Can't find a repository? <a href="#/how-to">Learn how to add it</a></p>
 
-  <div *ngIf="catalogueService.tabIndex !== -1">
+  <div class="active-filters" *ngIf="activeFilterCount">
+    <span class="active-label">Active</span>
+    <button type="button" class="filter-chip selected" *ngFor="let topic of selectedTopics" (click)="toggleTopic(topic)">
+      {{ topic }} <span aria-hidden="true">×</span>
+    </button>
+    <button type="button" class="filter-chip selected" *ngIf="selectedLanguage" (click)="onLanguageChange('')">
+      {{ selectedLanguage }} <span aria-hidden="true">×</span>
+    </button>
+    <button type="button" class="filter-chip selected" *ngIf="minStars > 0" (click)="onMinStarsChange('0')">
+      ≥ {{ minStars }} stars <span aria-hidden="true">×</span>
+    </button>
+    <button type="button" class="clear-all" (click)="clearFilters()">Clear all</button>
+  </div>
+
+  <div *ngIf="catalogueService.tabIndex !== -1" class="tabs-wrap">
     <mat-tab-group
       class="catalogue-tabs"
       (focusChange)="resetPage()"
@@ -44,18 +76,56 @@
       (selectedTabChange)="onTabChange($event)"
     >
       <mat-tab *ngFor="let key of catalogueService.confTabsKeys" label="{{ key }}">
-        <div *ngIf="catalogueService.items$[key] | async as items" class="tab-body">
-          <div class="results-bar" *ngIf="filteredLength(items) > 0">
-            <span *ngIf="search; else totalCount" role="status" aria-live="polite">{{ searchStatus(filteredLength(items)) }}</span>
-            <ng-template #totalCount>
-              <span>{{ repositoryCount(filteredLength(items)) }}</span>
-            </ng-template>
-            <button *ngIf="search" type="button" class="btn btn-link btn-sm p-0" (click)="clearSearch()">Clear search</button>
+        <ng-container *ngIf="catalogueService.items$[key] | async as items; else loading">
+          <div class="tab-body">
+          <div class="filter-panel" id="filters-panel" *ngIf="filtersOpen">
+            <div class="filter-grid">
+              <div class="filter-block">
+                <span class="filter-label">Topics</span>
+                <div class="filter-chips">
+                  <button
+                    type="button"
+                    class="filter-chip"
+                    *ngFor="let topic of topTopics(items)"
+                    [class.selected]="isTopicSelected(topic)"
+                    (click)="toggleTopic(topic)"
+                  >
+                    {{ topic }}
+                  </button>
+                  <span class="filter-empty" *ngIf="!topTopics(items).length">No topics in this tab</span>
+                </div>
+              </div>
+
+              <div class="filter-block">
+                <label class="filter-label" for="lang-filter">Language</label>
+                <select id="lang-filter" [value]="selectedLanguage" (change)="onLanguageChange($any($event.target).value)">
+                  <option value="">All languages</option>
+                  <option *ngFor="let language of languages(items)" [value]="language">{{ language }}</option>
+                </select>
+              </div>
+
+              <div class="filter-block">
+                <label class="filter-label" for="stars-filter">Minimum stars</label>
+                <select id="stars-filter" [value]="minStars" (change)="onMinStarsChange($any($event.target).value)">
+                  <option *ngFor="let stars of starOptions" [value]="stars">{{ stars === 0 ? 'Any' : '≥ ' + stars }}</option>
+                </select>
+              </div>
+            </div>
+
+            <p class="filter-tip">
+              Tip: <code>topic:lua</code>, <code>lang:TypeScript</code>, <code>owner:azerothcore</code>, <code>stars:&gt;100</code>
+            </p>
           </div>
 
-          <div class="repo-grid" *ngIf="filteredLength(items) > 0">
+          <div class="results-head">
+            <span class="results-count" [class.is-query]="search">{{ search ? searchStatus(filteredLength(items)) : repositoryCount(filteredLength(items)) }}</span>
+            <button *ngIf="search || activeFilterCount" type="button" class="clear-link" (click)="clearAll()">Reset</button>
+          </div>
+
+          <div class="result-list" *ngIf="filteredLength(items) > 0">
             <app-repo
-              *ngFor="let item of currentPageItems(items)"
+              *ngFor="let item of currentPageItems(items); let i = index"
+              [style.animation-delay.ms]="enterDelay(i)"
               [id]="item.id"
               [name]="item.name"
               [stars]="item.stargazers_count"
@@ -64,15 +134,17 @@
               [description]="item.description"
               [fullName]="item.full_name"
               [topics]="item.topics || []"
+              [starDelay]="i * 160"
             >
             </app-repo>
           </div>
 
-          <div class="empty-state" *ngIf="search && filteredLength(items) === 0" role="status" aria-live="polite">
+          <div class="empty-state" *ngIf="filteredLength(items) === 0 && (search || activeFilterCount)" role="status" aria-live="polite">
             <fa-icon [icon]="faSearch"></fa-icon>
             <h5>No repositories found</h5>
-            <p>Nothing matches “{{ search }}”. Try a different name, description or topic.</p>
-            <button type="button" class="btn btn-outline-primary btn-sm" (click)="clearSearch()">Clear search</button>
+            <p *ngIf="search">Nothing matches “{{ search }}”. Try a different name, description or topic.</p>
+            <p *ngIf="!search">No repositories match the selected filters.</p>
+            <button type="button" class="btn btn-outline-light btn-sm" (click)="clearAll()">Reset search and filters</button>
           </div>
 
           <mat-paginator
@@ -84,7 +156,23 @@
             [hidePageSize]="true"
           >
           </mat-paginator>
-        </div>
+          </div>
+        </ng-container>
+
+        <ng-template #loading>
+          <div class="tab-body">
+            <p class="sr-only" role="status">Loading repositories…</p>
+            <div class="skeleton-list" aria-hidden="true">
+              <div class="skeleton-row" *ngFor="let row of skeletonRows">
+                <span class="skeleton-icon"></span>
+                <span class="skeleton-body">
+                  <span class="skeleton-line" style="width: 30%"></span>
+                  <span class="skeleton-line" style="width: 62%"></span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </ng-template>
       </mat-tab>
     </mat-tab-group>
   </div>

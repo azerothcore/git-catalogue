@@ -1,0 +1,76 @@
+.route-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f1217;
+  color: #f6f7f9;
+  pointer-events: none;
+  animation: veil-sweep 0.85s cubic-bezier(0.76, 0, 0.24, 1) both;
+  will-change: transform;
+}
+
+.route-veil-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.route-veil-mark {
+  width: 46px;
+  height: 2px;
+  background: #b4232a;
+  transform-origin: center;
+  animation: veil-mark 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) 0.18s both;
+}
+
+.route-veil-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
+
+.route-veil-label {
+  color: rgba(246, 247, 249, 0.5);
+  font-size: 0.6rem;
+  letter-spacing: 0.44em;
+  text-transform: uppercase;
+}
+
+@keyframes veil-sweep {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  30% {
+    transform: translateY(0);
+  }
+
+  62% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes veil-mark {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-veil {
+    display: none;
+  }
+}

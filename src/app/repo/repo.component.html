@@ -1,30 +1,38 @@
-<article class="repo-card">
+<a class="repo-row" [href]="'#/details/' + id">
   <img
-    class="repo-icon"
+    class="repo-row-icon"
     [src]="'https://raw.githubusercontent.com/' + fullName + '/master/icon.png'"
     [alt]="name"
     loading="lazy"
     onerror="this.src = 'https://avatars0.githubusercontent.com/u/20147732?v=4';"
   />
 
-  <div class="repo-body">
-    <div class="repo-head">
-      <h5><a href="#/details/{{ id }}">{{ name }}</a></h5>
-      <span class="repo-stars" [title]="stars + ' stars'">
-        <fa-icon [icon]="faStar"></fa-icon>
-        {{ stars }}
-      </span>
+  <div class="repo-row-body">
+    <div class="repo-row-head">
+      <h3 class="repo-row-name">{{ name }}</h3>
+      <span class="repo-row-author">{{ fullName }}</span>
     </div>
 
-    <p class="repo-description" *ngIf="description">{{ description }}</p>
+    <p class="repo-row-description" *ngIf="description">{{ description }}</p>
 
-    <div class="repo-topics" *ngIf="topics?.length">
-      <span class="badge" *ngFor="let topic of (topics || []).slice(0, 3)">{{ topic }}</span>
-    </div>
-
-    <div class="repo-meta">
-      <span *ngIf="updated" title="Last update"><fa-icon [icon]="faClock"></fa-icon> Updated {{ updated | amTimeAgo }}</span>
-      <span *ngIf="created">Created {{ created | amTimeAgo }}</span>
+    <div class="repo-row-topics" *ngIf="topics?.length">
+      <span *ngFor="let topic of (topics || []).slice(0, 4)">{{ topic }}</span>
     </div>
   </div>
-</article>
+
+  <div class="repo-row-meta">
+    <span class="repo-row-stars" [class.is-gold]="stars > 10">
+      <span class="star-stack" [class.star-stack--triple]="starList.length === 3">
+        <fa-icon
+          *ngFor="let star of starList; let i = index"
+          [icon]="faStar"
+          [class.is-animated]="stars > 300"
+          [style.animation-delay.ms]="stars > 300 ? starDelay + i * 180 : null"
+        ></fa-icon>
+      </span>
+      {{ stars }}
+    </span>
+    <span class="repo-row-updated" *ngIf="updated">{{ updated | amTimeAgo }}</span>
+    <span class="repo-row-arrow" aria-hidden="true">→</span>
+  </div>
+</a>

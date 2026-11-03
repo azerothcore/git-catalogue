@@ -1,10 +1,13 @@
 <div class="details">
-  <a class="back-link" [href]="returnHash">
-    <fa-icon [icon]="faCaretLeft"></fa-icon>
-    Back to catalogue
-  </a>
-
   <ng-container *ngIf="data$ | async as data">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a [href]="returnHash"><fa-icon [icon]="faCaretLeft"></fa-icon> Catalogue</a>
+      <span class="sep">/</span>
+      <a [href]="'https://github.com/' + data.repo.owner.login" target="_blank" rel="noopener">{{ data.repo.owner.login }}</a>
+      <span class="sep">/</span>
+      <span class="current">{{ data.repo.name }}</span>
+    </nav>
+
     <header class="repo-hero">
       <img
         class="repo-hero-logo"
@@ -59,7 +62,7 @@
         <span class="stat-label"><fa-icon [icon]="faEye"></fa-icon> Watchers</span>
       </div>
       <div class="stat">
-        <span class="stat-value">{{ data.repo.open_issues_count }}</span>
+        <span class="stat-value">{{ data.repo.open_issues_count || 0 }}</span>
         <span class="stat-label"><fa-icon [icon]="faExclamationCircle"></fa-icon> Open issues</span>
       </div>
       <div class="stat" *ngIf="data.repo.language">

@@ -2,7 +2,7 @@ import { Location } from '@angular/common';
 import { ChangeDetectorRef, Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { MatTabChangeEvent } from '@angular/material/tabs';
-import { faSearch, IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faSearch, faSortAmountDown, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { Repository } from 'src/@types';
 import { CatalogueService } from '../services/catalogue/catalogue.service';
 
@@ -10,6 +10,14 @@ const PAGE_STORAGE_KEY = 'azerothcore.catalogue.page';
 const RETURN_HASH_STORAGE_KEY = 'azerothcore.catalogue.returnHash';
 const SORT_STORAGE_KEY = 'azerothcore.catalogue.sort';
 const SEARCH_STORAGE_KEY = 'azerothcore.catalogue.search';
+
+type ParsedQuery = {
+  text: string[];
+  topic?: string;
+  lang?: string;
+  owner?: string;
+  minStars?: number;
+};
 
 export type SortKey = 'stars' | 'updated' | 'created';
 
@@ -37,7 +45,18 @@ export class HomeComponent {
   sort: SortKey = this.readSort();
   search = this.readSearch();
   readonly faSearch: IconDefinition = faSearch;
+  readonly faFilter: IconDefinition = faFilter;
+  readonly faSortAmountDown: IconDefinition = faSortAmountDown;
   readonly sortOptions = SORT_OPTIONS;
+  readonly starOptions = [0, 10, 50, 100, 500];
+  readonly skeletonRows = [0, 1, 2, 3, 4, 5];
+
+  filtersOpen = false;
+  selectedTopics: string[] = [];
+  selectedLanguage = '';
+  minStars = 0;
+
+  private facetCache = new WeakMap<Repository[], { topics: string[]; languages: string[] }>();
 
   readPage(): number {
     try {
@@ -183,23 +202,152 @@ export class HomeComponent {
     return `${count} ${count === 1 ? 'repository' : 'repositories'}`;
   }
 
+  get activeFilterCount(): number {
+    return this.selectedTopics.length + (this.selectedLanguage ? 1 : 0) + (this.minStars > 0 ? 1 : 0);
+  }
+
+  toggleFilters(): void {
+    this.filtersOpen = !this.filtersOpen;
+  }
+
+  isTopicSelected(topic: string): boolean {
+    return this.selectedTopics.includes(topic);
+  }
+
+  toggleTopic(topic: string): void {
+    this.selectedTopics = this.isTopicSelected(topic)
+      ? this.selectedTopics.filter((selected) => selected !== topic)
+      : [...this.selectedTopics, topic];
+    this.resetPage();
+  }
+
+  onLanguageChange(value: string): void {
+    this.selectedLanguage = value;
+    this.resetPage();
+  }
+
+  onMinStarsChange(value: string): void {
+    this.minStars = Number(value) || 0;
+    this.resetPage();
+  }
+
+  clearFilters(): void {
+    this.selectedTopics = [];
+    this.selectedLanguage = '';
+    this.minStars = 0;
+    this.resetPage();
+  }
+
+  clearAll(): void {
+    this.search = '';
+    this.writeSearch('');
+    this.selectedTopics = [];
+    this.selectedLanguage = '';
+    this.minStars = 0;
+    this.resetPage();
+    this.searchInput?.nativeElement.focus();
+  }
+
+  enterDelay(index: number): number {
+    // Rows fade in pairs, so the list feels like it arrives in small batches.
+    return Math.floor(index / 2) * 90;
+  }
+
+  topTopics(items: Repository[]): string[] {
+    return this.facets(items).topics.slice(0, 14);
+  }
+
+  languages(items: Repository[]): string[] {
+    return this.facets(items).languages;
+  }
+
+  private facets(items: Repository[]): { topics: string[]; languages: string[] } {
+    let facets = this.facetCache.get(items);
+    if (!facets) {
+      const counts = new Map<string, number>();
+      const languages = new Set<string>();
+      for (const item of items) {
+        for (const topic of item.topics || []) {
+          counts.set(topic, (counts.get(topic) ?? 0) + 1);
+        }
+        if (item.language) {
+          languages.add(item.language);
+        }
+      }
+      facets = {
+        topics: [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([topic]) => topic),
+        languages: [...languages].sort((a, b) => a.localeCompare(b)),
+      };
+      this.facetCache.set(items, facets);
+    }
+    return facets;
+  }
+
   private matchingItems(modules: Repository[]): Repository[] {
-    const terms = this.terms;
-    if (terms.length === 0) {
+    const query = this.parsedQuery;
+    const hasQuery = query.text.length > 0 || !!query.topic || !!query.lang || !!query.owner || (query.minStars ?? 0) > 0;
+    if (!hasQuery && this.activeFilterCount === 0) {
       return modules;
     }
-    return modules.filter((item) => this.matches(item, terms));
+    return modules.filter((item) => this.matches(item, query));
   }
 
-  private matches(item: Repository, terms: string[]): boolean {
-    const haystack = this.searchableText(item);
-    return terms.every((term) => haystack.includes(term));
+  private matches(item: Repository, query: ParsedQuery): boolean {
+    if (!query.text.every((term) => this.searchableText(item).includes(term))) {
+      return false;
+    }
+    if (query.topic && !(item.topics || []).some((topic) => this.normalize(topic) === query.topic)) {
+      return false;
+    }
+    if (query.lang && this.normalize(item.language || '') !== query.lang) {
+      return false;
+    }
+    if (query.owner && this.normalize(item.owner?.login || '') !== query.owner) {
+      return false;
+    }
+    if ((query.minStars ?? 0) > 0 && (item.stargazers_count || 0) < query.minStars) {
+      return false;
+    }
+    if (this.selectedTopics.length > 0 && !this.selectedTopics.every((topic) => (item.topics || []).includes(topic))) {
+      return false;
+    }
+    if (this.selectedLanguage && item.language !== this.selectedLanguage) {
+      return false;
+    }
+    if (this.minStars > 0 && (item.stargazers_count || 0) < this.minStars) {
+      return false;
+    }
+    return true;
   }
 
-  private get terms(): string[] {
-    return this.normalize(this.search || '')
-      .split(/\s+/)
-      .filter(Boolean);
+  private get parsedQuery(): ParsedQuery {
+    const parsed: ParsedQuery = { text: [] };
+    const raw = (this.search || '').trim();
+    if (!raw) {
+      return parsed;
+    }
+
+    for (const token of raw.split(/\s+/)) {
+      const match = token.match(/^(topic|lang|language|owner|stars):(.+)$/i);
+      if (!match) {
+        parsed.text.push(this.normalize(token));
+        continue;
+      }
+
+      const key = match[1].toLowerCase();
+      const value = match[2];
+      if (key === 'topic') {
+        parsed.topic = this.normalize(value);
+      } else if (key === 'lang' || key === 'language') {
+        parsed.lang = this.normalize(value);
+      } else if (key === 'owner') {
+        parsed.owner = this.normalize(value);
+      } else {
+        parsed.minStars = parseInt(value.replace(/^[<>]=?/, ''), 10) || 0;
+      }
+    }
+
+    return parsed;
   }
 
   private searchableText(item: Repository): string {
