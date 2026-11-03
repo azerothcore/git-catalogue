@@ -1,69 +1,61 @@
-<div class="row">
-  <div class="col-6">
-    <label for="search-input">Search by name, description, topic or author:</label>
-
-    <div class="input-group mb-3">
-      <div class="input-group-prepend">
-        <span class="input-group-text" id="search">
-          <fa-icon [icon]="faSearch"></fa-icon>
-        </span>
-      </div>
-      <input
-        id="search-input"
-        #searchInput
-        type="search"
-        class="form-control"
-        placeholder="Search the catalogue (press /)"
-        [(ngModel)]="search"
-        (ngModelChange)="onSearchChange($event)"
-        (keydown.escape)="clearSearch()"
-        aria-label="Search by name, description, topic or author"
-        aria-describedby="search"
-        autocomplete="off"
-        spellcheck="false"
-      />
-      <div class="input-group-append" *ngIf="search">
-        <button type="button" class="btn btn-outline-secondary" (click)="clearSearch()" aria-label="Clear search">
+<section class="catalogue">
+  <header class="catalogue-toolbar">
+    <div class="catalogue-search">
+      <label class="sr-only" for="search-input">Search the catalogue</label>
+      <div class="search-box">
+        <fa-icon class="search-icon" [icon]="faSearch" aria-hidden="true"></fa-icon>
+        <input
+          id="search-input"
+          #searchInput
+          type="text"
+          role="searchbox"
+          inputmode="search"
+          enterkeyhint="search"
+          [(ngModel)]="search"
+          (ngModelChange)="onSearchChange($event)"
+          (keydown.escape)="clearSearch()"
+          placeholder="Search by name, description, topic or author…"
+          aria-label="Search by name, description, topic or author"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button *ngIf="search" type="button" class="search-clear" (click)="clearSearch()" aria-label="Clear search">
           <span aria-hidden="true">&times;</span>
         </button>
+        <kbd *ngIf="!search" class="search-hint" aria-hidden="true">/</kbd>
       </div>
     </div>
 
-    <label for="sort">Sort items by:</label>
-
-    <select id="sort" class="form-control mb-3" [(ngModel)]="sort" (ngModelChange)="onSortChange($event)" aria-label="Sort">
-      <option *ngFor="let option of sortOptions" [value]="option.key">{{ option.label }}</option>
-    </select>
-  </div>
-
-  <div class="col-6">
-    <div class="col alert alert-info alert-submit">
-      <p>Want to submit your <b>repository</b>? Check the instructions <a href="#/how-to">here</a></p>
+    <div class="catalogue-sort">
+      <label for="sort">Sort</label>
+      <select id="sort" [(ngModel)]="sort" (ngModelChange)="onSortChange($event)" aria-label="Sort repositories">
+        <option *ngFor="let option of sortOptions" [value]="option.key">{{ option.label }}</option>
+      </select>
     </div>
-  </div>
-</div>
+  </header>
 
-<div class="row" *ngIf="catalogueService.tabIndex !== -1">
-  <div class="col-12">
-    <mat-tab-group (focusChange)="resetPage()" [selectedIndex]="catalogueService.tabIndex" (selectedTabChange)="onTabChange($event)">
+  <p class="catalogue-hint">Can't find a repository? <a href="#/how-to">Check how to add it</a>.</p>
+
+  <div *ngIf="catalogueService.tabIndex !== -1">
+    <mat-tab-group
+      class="catalogue-tabs"
+      (focusChange)="resetPage()"
+      [selectedIndex]="catalogueService.tabIndex"
+      (selectedTabChange)="onTabChange($event)"
+    >
       <mat-tab *ngFor="let key of catalogueService.confTabsKeys" label="{{ key }}">
-        <div *ngIf="catalogueService.items$[key] | async as items" class="mt-2">
-          <div *ngIf="search && filteredLength(items) > 0" class="text-muted small mb-2" role="status" aria-live="polite">
-            {{ searchStatus(filteredLength(items)) }}
+        <div *ngIf="catalogueService.items$[key] | async as items" class="tab-body">
+          <div class="results-bar" *ngIf="filteredLength(items) > 0">
+            <span *ngIf="search; else totalCount" role="status" aria-live="polite">{{ searchStatus(filteredLength(items)) }}</span>
+            <ng-template #totalCount>
+              <span>{{ repositoryCount(filteredLength(items)) }}</span>
+            </ng-template>
+            <button *ngIf="search" type="button" class="btn btn-link btn-sm p-0" (click)="clearSearch()">Clear search</button>
           </div>
 
-          <div
-            *ngIf="search && filteredLength(items) === 0"
-            class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between"
-            role="status"
-            aria-live="polite"
-          >
-            <span class="mr-2">No repositories match “{{ search }}”. Try a different name, description or topic.</span>
-            <button type="button" class="btn btn-sm btn-outline-dark" (click)="clearSearch()">Clear search</button>
-          </div>
-
-          <div *ngFor="let item of currentPageItems(items)">
+          <div class="repo-grid" *ngIf="filteredLength(items) > 0">
             <app-repo
+              *ngFor="let item of currentPageItems(items)"
               [id]="item.id"
               [name]="item.name"
               [stars]="item.stargazers_count"
@@ -71,8 +63,16 @@
               [updated]="item.pushed_at"
               [description]="item.description"
               [fullName]="item.full_name"
+              [topics]="item.topics || []"
             >
             </app-repo>
+          </div>
+
+          <div class="empty-state" *ngIf="search && filteredLength(items) === 0" role="status" aria-live="polite">
+            <fa-icon [icon]="faSearch"></fa-icon>
+            <h5>No repositories found</h5>
+            <p>Nothing matches “{{ search }}”. Try a different name, description or topic.</p>
+            <button type="button" class="btn btn-outline-primary btn-sm" (click)="clearSearch()">Clear search</button>
           </div>
 
           <mat-paginator
@@ -88,4 +88,4 @@
       </mat-tab>
     </mat-tab-group>
   </div>
-</div>
+</section>

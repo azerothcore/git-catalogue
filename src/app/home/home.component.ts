@@ -179,6 +179,10 @@ export class HomeComponent {
     return `${count} ${count === 1 ? 'result' : 'results'} for “${query}”`;
   }
 
+  repositoryCount(count: number): string {
+    return `${count} ${count === 1 ? 'repository' : 'repositories'}`;
+  }
+
   private matchingItems(modules: Repository[]): Repository[] {
     const terms = this.terms;
     if (terms.length === 0) {

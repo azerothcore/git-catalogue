@@ -1,18 +1,30 @@
-<div class="media">
+<article class="repo-card">
   <img
+    class="repo-icon"
     [src]="'https://raw.githubusercontent.com/' + fullName + '/master/icon.png'"
-    alt="{{ fullName }}"
-    class="mr-3 logo-small"
+    [alt]="name"
+    loading="lazy"
     onerror="this.src = 'https://avatars0.githubusercontent.com/u/20147732?v=4';"
   />
-  <div class="media-body">
-    <h4 class="mt-0 mb-0">
-      <a href="#/details/{{ id }}">{{ name }}</a>
-    </h4>
-    <span class="text-muted text-tiny">
-      <fa-icon [icon]="faStar"></fa-icon> {{ stars }} | Created {{ created | amTimeAgo }}
-      <ng-container *ngIf="updated"> | Updated {{ updated | amTimeAgo }}</ng-container>
-    </span>
-    <p>{{ description }}</p>
+
+  <div class="repo-body">
+    <div class="repo-head">
+      <h5><a href="#/details/{{ id }}">{{ name }}</a></h5>
+      <span class="repo-stars" [title]="stars + ' stars'">
+        <fa-icon [icon]="faStar"></fa-icon>
+        {{ stars }}
+      </span>
+    </div>
+
+    <p class="repo-description" *ngIf="description">{{ description }}</p>
+
+    <div class="repo-topics" *ngIf="topics?.length">
+      <span class="badge" *ngFor="let topic of (topics || []).slice(0, 3)">{{ topic }}</span>
+    </div>
+
+    <div class="repo-meta">
+      <span *ngIf="updated" title="Last update"><fa-icon [icon]="faClock"></fa-icon> Updated {{ updated | amTimeAgo }}</span>
+      <span *ngIf="created">Created {{ created | amTimeAgo }}</span>
+    </div>
   </div>
-</div>
+</article>

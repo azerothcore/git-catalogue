@@ -1,7 +1,217 @@
-// Chrome and Edge render a native clear button for type="search";
-// the input group already has its own, so hide the native one.
+:host {
+  display: block;
+}
+
+.catalogue {
+  padding-bottom: 1.5rem;
+}
+
+.catalogue-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0.85rem 0;
+  margin-bottom: 0.25rem;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid #e5e7eb;
+  backdrop-filter: blur(8px);
+}
+
+.catalogue-search {
+  flex: 1 1 320px;
+  min-width: 240px;
+}
+
+.search-box {
+  position: relative;
+
+  .search-icon {
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9aa5b1;
+    font-size: 0.9rem;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    padding: 0.6rem 2.6rem 0.6rem 2.4rem;
+    border: 1px solid #d2d6dc;
+    border-radius: 999px;
+    background: #fff;
+    color: #1f2933;
+    font-size: 0.95rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &::placeholder {
+      color: #9aa5b1;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+    }
+  }
+
+  .search-clear {
+    position: absolute;
+    right: 0.55rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #6b7280;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+      background: #eef2f7;
+      color: #1f2933;
+    }
+  }
+
+  .search-hint {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.05rem 0.35rem;
+    border: 1px solid #d2d6dc;
+    border-radius: 0.25rem;
+    background: #f8fafc;
+    color: #9aa5b1;
+    font-family: inherit;
+    font-size: 0.7rem;
+  }
+}
+
+.catalogue-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  label {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  select {
+    padding: 0.45rem 1.75rem 0.45rem 0.65rem;
+    border: 1px solid #d2d6dc;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #1f2933;
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    &:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+    }
+  }
+}
+
+.catalogue-hint {
+  margin: 0.75rem 0 0.25rem;
+  color: #6b7280;
+  font-size: 0.85rem;
+
+  a {
+    color: #007bff;
+  }
+}
+
+.results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.9rem 0 0.35rem;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.repo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.empty-state {
+  margin: 1.5rem 0;
+  padding: 3rem 1rem;
+  border: 1px dashed #d2d6dc;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #6b7280;
+  text-align: center;
+
+  fa-icon {
+    color: #9aa5b1;
+    font-size: 1.75rem;
+  }
+
+  h5 {
+    margin: 0.9rem 0 0.35rem;
+    color: #1f2933;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+mat-paginator {
+  margin-top: 0.75rem;
+  background: transparent;
+}
+
+::ng-deep .catalogue-tabs .mat-mdc-tab-header {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+::ng-deep .catalogue-tabs .mat-mdc-tab .mdc-tab__text-label {
+  font-weight: 600;
+}
+
 input[type='search']::-webkit-search-cancel-button,
-input[type='search']::-webkit-search-decoration {
+input[type='search']::-webkit-search-decoration,
+input[type='search']::-ms-clear {
+  display: none;
   -webkit-appearance: none;
   appearance: none;
+}
+
+@media (max-width: 575px) {
+  ::ng-deep .catalogue-tabs .mat-mdc-tab {
+    min-width: 0;
+    padding: 0 0.5rem;
+  }
+
+  ::ng-deep .catalogue-tabs .mdc-tab__text-label {
+    font-size: 0.8rem;
+  }
 }
