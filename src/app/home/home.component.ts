@@ -1,5 +1,5 @@
 import { Location } from '@angular/common';
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { MatTabChangeEvent } from '@angular/material/tabs';
 import { faSearch, IconDefinition } from '@fortawesome/free-solid-svg-icons';
@@ -9,6 +9,7 @@ import { CatalogueService } from '../services/catalogue/catalogue.service';
 const PAGE_STORAGE_KEY = 'azerothcore.catalogue.page';
 const RETURN_HASH_STORAGE_KEY = 'azerothcore.catalogue.returnHash';
 const SORT_STORAGE_KEY = 'azerothcore.catalogue.sort';
+const SEARCH_STORAGE_KEY = 'azerothcore.catalogue.search';
 
 export type SortKey = 'stars' | 'updated' | 'created';
 
@@ -21,9 +22,12 @@ export const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 @Component({
     selector: 'app-home',
     templateUrl: './home.component.html',
+    styleUrls: ['./home.component.scss'],
     standalone: false
 })
 export class HomeComponent {
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+
   constructor(public catalogueService: CatalogueService, public cdRef: ChangeDetectorRef, private location: Location) {
     window.parent.document.title = 'GitCatalogue';
     this.saveRoute();
@@ -31,7 +35,7 @@ export class HomeComponent {
 
   page = this.readPage();
   sort: SortKey = this.readSort();
-  search: string;
+  search = this.readSearch();
   readonly faSearch: IconDefinition = faSearch;
   readonly sortOptions = SORT_OPTIONS;
 
@@ -65,6 +69,24 @@ export class HomeComponent {
     } catch (error) {}
   }
 
+  readSearch(): string {
+    try {
+      return sessionStorage.getItem(SEARCH_STORAGE_KEY) || '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  private writeSearch(value: string): void {
+    try {
+      if (value) {
+        sessionStorage.setItem(SEARCH_STORAGE_KEY, value);
+      } else {
+        sessionStorage.removeItem(SEARCH_STORAGE_KEY);
+      }
+    } catch (error) {}
+  }
+
   saveRoute(path?: string): void {
     try {
       const route = path || this.location.path() || '/home';
@@ -84,7 +106,35 @@ export class HomeComponent {
   }
 
   onSearchChange(value: string): void {
+    this.writeSearch(value);
     this.resetPage();
+  }
+
+  clearSearch(): void {
+    if (!this.search) {
+      return;
+    }
+    this.search = '';
+    this.writeSearch('');
+    this.resetPage();
+    this.searchInput?.nativeElement.focus();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent): void {
+    if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    const isTyping =
+      !!target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
+    if (isTyping) {
+      return;
+    }
+
+    event.preventDefault();
+    this.searchInput?.nativeElement.focus();
   }
 
   onSortChange(value: SortKey): void {
@@ -121,12 +171,46 @@ export class HomeComponent {
     return this.matchingItems(modules).length;
   }
 
+  searchStatus(count: number): string {
+    const query = this.search.trim();
+    if (count === 0) {
+      return `No results for “${query}”`;
+    }
+    return `${count} ${count === 1 ? 'result' : 'results'} for “${query}”`;
+  }
+
   private matchingItems(modules: Repository[]): Repository[] {
-    if (!this.search) {
+    const terms = this.terms;
+    if (terms.length === 0) {
       return modules;
     }
-    const search = this.search.toLowerCase();
-    return modules.filter((item) => item.name.toLowerCase().indexOf(search) > -1);
+    return modules.filter((item) => this.matches(item, terms));
+  }
+
+  private matches(item: Repository, terms: string[]): boolean {
+    const haystack = this.searchableText(item);
+    return terms.every((term) => haystack.includes(term));
+  }
+
+  private get terms(): string[] {
+    return this.normalize(this.search || '')
+      .split(/\s+/)
+      .filter(Boolean);
+  }
+
+  private searchableText(item: Repository): string {
+    return this.normalize(
+      [item.name, item.full_name, item.description, item.language, item.owner?.login, ...(item.topics || [])]
+        .filter(Boolean)
+        .join(' '),
+    );
+  }
+
+  private normalize(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 
   private sortItems(modules: Repository[]): Repository[] {

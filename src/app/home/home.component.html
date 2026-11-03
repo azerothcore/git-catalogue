@@ -1,6 +1,6 @@
 <div class="row">
   <div class="col-6">
-    Search an item by name:
+    <label for="search-input">Search by name, description, topic or author:</label>
 
     <div class="input-group mb-3">
       <div class="input-group-prepend">
@@ -9,14 +9,24 @@
         </span>
       </div>
       <input
-        type="text"
+        id="search-input"
+        #searchInput
+        type="search"
         class="form-control"
-        placeholder="Search an item in the catalogue"
+        placeholder="Search the catalogue (press /)"
         [(ngModel)]="search"
         (ngModelChange)="onSearchChange($event)"
-        aria-label="Search"
+        (keydown.escape)="clearSearch()"
+        aria-label="Search by name, description, topic or author"
         aria-describedby="search"
+        autocomplete="off"
+        spellcheck="false"
       />
+      <div class="input-group-append" *ngIf="search">
+        <button type="button" class="btn btn-outline-secondary" (click)="clearSearch()" aria-label="Clear search">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
     </div>
 
     <label for="sort">Sort items by:</label>
@@ -38,6 +48,20 @@
     <mat-tab-group (focusChange)="resetPage()" [selectedIndex]="catalogueService.tabIndex" (selectedTabChange)="onTabChange($event)">
       <mat-tab *ngFor="let key of catalogueService.confTabsKeys" label="{{ key }}">
         <div *ngIf="catalogueService.items$[key] | async as items" class="mt-2">
+          <div *ngIf="search && filteredLength(items) > 0" class="text-muted small mb-2" role="status" aria-live="polite">
+            {{ searchStatus(filteredLength(items)) }}
+          </div>
+
+          <div
+            *ngIf="search && filteredLength(items) === 0"
+            class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between"
+            role="status"
+            aria-live="polite"
+          >
+            <span class="mr-2">No repositories match “{{ search }}”. Try a different name, description or topic.</span>
+            <button type="button" class="btn btn-sm btn-outline-dark" (click)="clearSearch()">Clear search</button>
+          </div>
+
           <div *ngFor="let item of currentPageItems(items)">
             <app-repo
               [id]="item.id"
@@ -52,6 +76,7 @@
           </div>
 
           <mat-paginator
+            *ngIf="filteredLength(items) > 0"
             [pageIndex]="page"
             [length]="filteredLength(items)"
             [pageSize]="catalogueService.CONF.pageSize"
