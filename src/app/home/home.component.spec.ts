@@ -25,6 +25,39 @@ describe('HomeComponent', () => {
     { name: 'newest', stargazers_count: 1, created_at: '2023-01-01T00:00:00Z', pushed_at: '2023-06-01T00:00:00Z' },
   ] as unknown as Repository[];
 
+  const SEARCH_REPOS = [
+    {
+      name: 'mod-eluna',
+      description: 'Lua engine for AzerothCore',
+      topics: ['azerothcore-lua'],
+      language: 'C++',
+      owner: { login: 'azerothcore' },
+      stargazers_count: 5,
+      created_at: '2020-01-01T00:00:00Z',
+      pushed_at: '2020-01-01T00:00:00Z',
+    },
+    {
+      name: 'mod-transmog',
+      description: 'Transmogrification module',
+      topics: ['azerothcore-module'],
+      language: 'C++',
+      owner: { login: 'azerothcore' },
+      stargazers_count: 50,
+      created_at: '2020-01-01T00:00:00Z',
+      pushed_at: '2020-01-01T00:00:00Z',
+    },
+    {
+      name: 'Rápido',
+      description: 'Accents test',
+      topics: [],
+      language: 'Lua',
+      owner: { login: 'someone' },
+      stargazers_count: 1,
+      created_at: '2020-01-01T00:00:00Z',
+      pushed_at: '2020-01-01T00:00:00Z',
+    },
+  ] as unknown as Repository[];
+
   beforeEach(async () => {
     const MOCK_CONFIG: Config = {
       page: 0,
@@ -152,5 +185,82 @@ describe('HomeComponent', () => {
     expect(component.page).toBe(0);
     expect(sessionStorage.getItem('azerothcore.catalogue.page')).toBe('0');
     expect(sessionStorage.getItem('azerothcore.catalogue.returnHash')).toBe('#/tab/test');
+  });
+
+  it('should match repositories by name, description, topic, language or author', () => {
+    component.search = 'transmogrification';
+    expect(component.filteredLength(SEARCH_REPOS)).toBe(1);
+
+    component.search = 'azerothcore-lua';
+    expect(component.filteredLength(SEARCH_REPOS)).toBe(1);
+
+    component.search = 'C++';
+    expect(component.filteredLength(SEARCH_REPOS)).toBe(2);
+
+    component.search = 'someone';
+    expect(component.filteredLength(SEARCH_REPOS)).toBe(1);
+  });
+
+  it('should require every search term to match', () => {
+    component.search = 'module azerothcore';
+    expect(component.filteredLength(SEARCH_REPOS)).toBe(1);
+
+    component.search = 'eluna module';
+    expect(component.filteredLength(SEARCH_REPOS)).toBe(0);
+  });
+
+  it('should ignore case and accents when searching', () => {
+    component.search = 'ELUNA';
+    expect(component.filteredLength(SEARCH_REPOS)).toBe(1);
+
+    component.search = 'rapido';
+    expect(component.filteredLength(SEARCH_REPOS)).toBe(1);
+  });
+
+  it('should report how many results match', () => {
+    component.search = 'eluna';
+    expect(component.searchStatus(1)).toBe('1 result for “eluna”');
+
+    component.search = 'nothing';
+    expect(component.searchStatus(0)).toBe('No results for “nothing”');
+  });
+
+  it('should save the search and reset the page when the query changes', () => {
+    component.page = 2;
+
+    component.onSearchChange('eluna');
+
+    expect(component.page).toBe(0);
+    expect(sessionStorage.getItem('azerothcore.catalogue.search')).toBe('eluna');
+  });
+
+  it('should clear the search and forget it', () => {
+    component.search = 'eluna';
+    component.page = 2;
+    sessionStorage.setItem('azerothcore.catalogue.search', 'eluna');
+
+    component.clearSearch();
+
+    expect(component.search).toBe('');
+    expect(component.page).toBe(0);
+    expect(sessionStorage.getItem('azerothcore.catalogue.search')).toBeNull();
+  });
+
+  it('should restore the search from session storage', () => {
+    sessionStorage.setItem('azerothcore.catalogue.search', 'eluna');
+
+    const restoredFixture = TestBed.createComponent(HomeComponent);
+
+    expect(restoredFixture.componentInstance.search).toBe('eluna');
+    restoredFixture.destroy();
+  });
+
+  it('should focus the search input when pressing /', () => {
+    const input = fixture.nativeElement.querySelector('#search-input') as HTMLInputElement;
+    spyOn(input, 'focus');
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '/' }));
+
+    expect(input.focus).toHaveBeenCalled();
   });
 });

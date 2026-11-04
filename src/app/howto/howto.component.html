@@ -18,18 +18,20 @@
 
 <h5>Available Categories & Required Topics:</h5>
 <div class="row">
-  <div class="col-md-6" *ngFor="let tab of catalogueService.CONF?.tabs | keyvalue">
-    <div class="card mb-3">
-      <div class="card-body">
-        <h6 class="card-title">{{ tab.key }}</h6>
-        <p class="card-text">
-          <strong>Required topic:</strong> 
-          <code class="bg-light p-1 rounded">{{ tab.value.topic }}</code>
-        </p>
-        <small class="text-muted">Organization: {{ tab.value.org || 'default-org' }}</small>
+  @for (tab of catalogueService.CONF.tabs | keyvalue; track tab.key) {
+    <div class="col-md-6">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6 class="card-title">{{ tab.key }}</h6>
+          <p class="card-text">
+            <strong>Required topic:</strong>
+            <code class="bg-light p-1 rounded">{{ tab.value.topic }}</code>
+          </p>
+          <small class="text-muted">Organization: {{ tab.value.org || 'default-org' }}</small>
+        </div>
       </div>
     </div>
-  </div>
+  }
 </div>
 
 <div class="alert alert-primary">

@@ -15,6 +15,13 @@ export class RepoComponent {
   @Input() updated: Date;
   @Input() description: string;
   @Input() fullName: string;
+  @Input() topics: string[] = [];
+  @Input() starDelay = 0;
+
+  get starList(): number[] {
+    const count = this.stars > 300 ? 3 : this.stars > 100 ? 2 : 1;
+    return Array.from({ length: count }, (_, index) => index);
+  }
 
   readonly faStar: IconDefinition = faStar;
 }
