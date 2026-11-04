@@ -88,8 +88,8 @@
     <div class="details-layout">
       <article class="card readme-card">
         <h2 class="section-title">README</h2>
-        <div id="readme-markdown" class="markdown-body">
-          <markdown>
+        <div id="readme-markdown" class="markdown-body" #readme>
+          <markdown (ready)="resolveReadmeImages(readme, data.repo)">
             {{ data.readme | emojiFixup }}
           </markdown>
         </div>

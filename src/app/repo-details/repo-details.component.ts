@@ -12,9 +12,11 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Observable } from 'rxjs';
 import { pluck, tap } from 'rxjs/operators';
+import { Repository } from 'src/@types';
 import { RepoDetailsData } from '../services/resolvers/repo-details-resolver.service';
 
 const RETURN_HASH_STORAGE_KEY = 'azerothcore.catalogue.returnHash';
+const ABSOLUTE_URL = /^([a-z][a-z\d+.-]*:|\/\/)/i;
 
 @Component({
     selector: 'app-repo-details',
@@ -44,6 +46,18 @@ export class RepoDetailsComponent {
   readonly returnHash = this.readReturnHash();
 
   data$: Observable<RepoDetailsData>;
+
+  resolveReadmeImages(readme: HTMLElement, repo: Repository): void {
+    const base = `https://github.com/${repo.full_name}/raw/${repo.default_branch}/`;
+
+    readme.querySelectorAll('img').forEach((img) => {
+      const src = img.getAttribute('src');
+      if (src && !ABSOLUTE_URL.test(src)) {
+        // on GitHub a leading slash means the repository root, not the root of github.com
+        img.src = new URL(src.replace(/^\/+/, ''), base).href;
+      }
+    });
+  }
 
   private readReturnHash(): string {
     try {
