@@ -1,5 +1,5 @@
 <div class="details">
-  <ng-container *ngIf="data$ | async as data">
+  @if (data$ | async; as data) {
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a [href]="returnHash"><fa-icon [icon]="faCaretLeft"></fa-icon> Catalogue</a>
       <span class="sep">/</span>
@@ -25,11 +25,17 @@
           </span>
         </div>
 
-        <p class="repo-hero-description" *ngIf="data.repo.description">{{ data.repo.description }}</p>
+        @if (data.repo.description) {
+          <p class="repo-hero-description">{{ data.repo.description }}</p>
+        }
 
-        <div class="repo-topics" *ngIf="data.repo.topics?.length">
-          <span class="badge" *ngFor="let topic of data.repo.topics">{{ topic }}</span>
-        </div>
+        @if (data.repo.topics?.length) {
+          <div class="repo-topics">
+            @for (topic of data.repo.topics; track topic) {
+              <span class="badge">{{ topic }}</span>
+            }
+          </div>
+        }
       </div>
 
       <div class="repo-hero-actions">
@@ -65,14 +71,18 @@
         <span class="stat-value">{{ data.repo.open_issues_count || 0 }}</span>
         <span class="stat-label"><fa-icon [icon]="faExclamationCircle"></fa-icon> Open issues</span>
       </div>
-      <div class="stat" *ngIf="data.repo.language">
-        <span class="stat-value">{{ data.repo.language }}</span>
-        <span class="stat-label"><fa-icon [icon]="faCode"></fa-icon> Language</span>
-      </div>
-      <div class="stat" *ngIf="data.repo.license">
-        <span class="stat-value">{{ data.repo.license.spdx_id }}</span>
-        <span class="stat-label"><fa-icon [icon]="faBalanceScale"></fa-icon> License</span>
-      </div>
+      @if (data.repo.language) {
+        <div class="stat">
+          <span class="stat-value">{{ data.repo.language }}</span>
+          <span class="stat-label"><fa-icon [icon]="faCode"></fa-icon> Language</span>
+        </div>
+      }
+      @if (data.repo.license) {
+        <div class="stat">
+          <span class="stat-value">{{ data.repo.license.spdx_id }}</span>
+          <span class="stat-label"><fa-icon [icon]="faBalanceScale"></fa-icon> License</span>
+        </div>
+      }
     </section>
 
     <div class="details-layout">
@@ -113,20 +123,24 @@
             <dt>Last update</dt>
             <dd>{{ data.repo.pushed_at | amTimeAgo }}</dd>
           </div>
-          <div *ngIf="data.repo.homepage">
-            <dt>Homepage</dt>
-            <dd>
-              <a [href]="data.repo.homepage" target="_blank" rel="noopener">{{ data.repo.homepage }}</a>
-            </dd>
-          </div>
-          <div *ngIf="data.repo.license">
-            <dt>License</dt>
-            <dd>{{ data.repo.license.spdx_id }}</dd>
-          </div>
+          @if (data.repo.homepage) {
+            <div>
+              <dt>Homepage</dt>
+              <dd>
+                <a [href]="data.repo.homepage" target="_blank" rel="noopener">{{ data.repo.homepage }}</a>
+              </dd>
+            </div>
+          }
+          @if (data.repo.license) {
+            <div>
+              <dt>License</dt>
+              <dd>{{ data.repo.license.spdx_id }}</dd>
+            </div>
+          }
         </dl>
 
         <a class="btn btn-outline-primary btn-block" [href]="data.repo.html_url" target="_blank" rel="noopener">Open on GitHub</a>
       </aside>
     </div>
-  </ng-container>
+  }
 </div>
