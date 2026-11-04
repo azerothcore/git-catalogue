@@ -1,25 +1,19 @@
-<a class="repo-row" [href]="`#/details/${id}`">
-  <img
-    class="repo-row-icon"
-    [src]="`https://raw.githubusercontent.com/${fullName}/master/icon.png`"
-    [alt]="name"
-    loading="lazy"
-    onerror="this.src = 'https://avatars0.githubusercontent.com/u/20147732?v=4';"
-  />
+<a class="repo-row" [routerLink]="['/details', repo().id]">
+  <img class="repo-row-icon" [src]="icon()" [alt]="repo().name" loading="lazy" (error)="icon.set(fallbackIcon)" />
 
   <div class="repo-row-body">
     <div class="repo-row-head">
-      <h3 class="repo-row-name">{{ name }}</h3>
-      <span class="repo-row-author">{{ fullName }}</span>
+      <h3 class="repo-row-name">{{ repo().name }}</h3>
+      <span class="repo-row-author">{{ repo().full_name }}</span>
     </div>
 
-    @if (description) {
+    @if (repo().description; as description) {
       <p class="repo-row-description">{{ description }}</p>
     }
 
-    @if (topics?.length) {
+    @if (visibleTopics().length) {
       <div class="repo-row-topics">
-        @for (topic of (topics || []).slice(0, 4); track topic) {
+        @for (topic of visibleTopics(); track topic) {
           <span>{{ topic }}</span>
         }
       </div>
@@ -27,20 +21,20 @@
   </div>
 
   <div class="repo-row-meta">
-    <span class="repo-row-stars" [class.is-gold]="stars > 10">
-      <span class="star-stack" [class.star-stack--triple]="starList.length === 3">
-        @for (star of starList; track $index; let i = $index) {
+    <span class="repo-row-stars" [class.is-gold]="repo().stargazers_count > 10">
+      <span class="star-stack" [class.star-stack--triple]="starList().length === 3">
+        @for (star of starList(); track $index; let i = $index) {
           <fa-icon
             [icon]="faStar"
-            [class.is-animated]="stars > 300"
-            [style.animation-delay.ms]="stars > 300 ? starDelay + i * 180 : null"
-          ></fa-icon>
+            [class.is-animated]="isPopular()"
+            [style.animation-delay.ms]="isPopular() ? starDelay() + i * 180 : null"
+          />
         }
       </span>
-      {{ stars }}
+      {{ repo().stargazers_count }}
     </span>
-    @if (updated) {
-      <span class="repo-row-updated">{{ updated | amTimeAgo }}</span>
+    @if (repo().pushed_at; as pushedAt) {
+      <span class="repo-row-updated">{{ pushedAt | amTimeAgo }}</span>
     }
     <span class="repo-row-arrow" aria-hidden="true">→</span>
   </div>

@@ -1,16 +1,16 @@
-import { Component, Injector } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Injector } from '@angular/core';
 import { createCustomElement } from '@angular/elements';
 import { CatalogueComponent } from './catalogue/catalogue.component';
 
 @Component({
-    selector: 'app-root',
-    templateUrl: './app.component.html',
-    styleUrls: ['./app.component.scss'],
-    standalone: false
+  selector: 'app-root',
+  template: '<app-catalogue />',
+  imports: [CatalogueComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  constructor(injector: Injector) {
-    const catalogueElement = createCustomElement(CatalogueComponent, { injector });
+  constructor() {
+    const catalogueElement = createCustomElement(CatalogueComponent, { injector: inject(Injector) });
     customElements.define('catalogue-element', catalogueElement);
   }
 }

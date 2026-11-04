@@ -1,57 +1,63 @@
-import { Component, OnDestroy } from '@angular/core';
-import { NavigationStart, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationStart, Router, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs/operators';
+
+const READY_CLASS = 'catalogue-ready';
+const VEIL_DURATION_MS = 900;
+const VEIL_RESTART_DELAY_MS = 20;
 
 @Component({
-    selector: 'app-catalogue',
-    templateUrl: './catalogue.component.html',
-    styleUrls: ['./catalogue.component.scss'],
-    standalone: false
+  selector: 'app-catalogue',
+  templateUrl: './catalogue.component.html',
+  styleUrl: './catalogue.component.scss',
+  imports: [RouterOutlet],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CatalogueComponent implements OnDestroy {
-  veilVisible = false;
+export class CatalogueComponent {
+  protected readonly veilVisible = signal(false);
 
-  private readonly subscription = new Subscription();
   private showTimer?: number;
   private hideTimer?: number;
-  private readonly reduceMotion =
-    typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  constructor(private readonly router: Router) {
-    document.body.classList.remove('catalogue-ready');
+  constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      this.clearTimers();
+      document.body.classList.remove(READY_CLASS);
+    });
 
-    if (!this.reduceMotion) {
-      this.veilVisible = true;
-      this.hideTimer = window.setTimeout(() => this.finishTransition(), 900);
-    } else {
-      document.body.classList.add('catalogue-ready');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.body.classList.add(READY_CLASS);
+      return;
     }
 
-    this.subscription.add(
-      this.router.events.subscribe((event) => {
-        if (!(event instanceof NavigationStart) || this.reduceMotion) {
-          return;
-        }
+    document.body.classList.remove(READY_CLASS);
+    this.veilVisible.set(true);
+    this.hideTimer = window.setTimeout(() => this.finishTransition(), VEIL_DURATION_MS);
 
-        window.clearTimeout(this.showTimer);
-        window.clearTimeout(this.hideTimer);
-        document.body.classList.remove('catalogue-ready');
-        this.veilVisible = false;
-        this.showTimer = window.setTimeout(() => (this.veilVisible = true), 20);
-        this.hideTimer = window.setTimeout(() => this.finishTransition(), 900);
-      }),
-    );
+    inject(Router)
+      .events.pipe(
+        filter((event) => event instanceof NavigationStart),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.replayVeil());
   }
 
-  ngOnDestroy(): void {
-    this.subscription.unsubscribe();
-    window.clearTimeout(this.showTimer);
-    window.clearTimeout(this.hideTimer);
-    document.body.classList.remove('catalogue-ready');
+  private replayVeil(): void {
+    this.clearTimers();
+    document.body.classList.remove(READY_CLASS);
+    this.veilVisible.set(false);
+    this.showTimer = window.setTimeout(() => this.veilVisible.set(true), VEIL_RESTART_DELAY_MS);
+    this.hideTimer = window.setTimeout(() => this.finishTransition(), VEIL_DURATION_MS);
   }
 
   private finishTransition(): void {
-    this.veilVisible = false;
-    document.body.classList.add('catalogue-ready');
+    this.veilVisible.set(false);
+    document.body.classList.add(READY_CLASS);
+  }
+
+  private clearTimers(): void {
+    window.clearTimeout(this.showTimer);
+    window.clearTimeout(this.hideTimer);
   }
 }

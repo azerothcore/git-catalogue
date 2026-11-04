@@ -1,4 +1,4 @@
-<a href="#/home"><fa-icon [icon]="faCaretLeft"></fa-icon> &nbsp; back to Catalogue</a>
+<a routerLink="/home"><fa-icon [icon]="faCaretLeft" /> &nbsp; back to Catalogue</a>
 
 <h2 class="mt-3">How to add your repository to the catalogue</h2>
 
@@ -18,7 +18,7 @@
 
 <h5>Available Categories & Required Topics:</h5>
 <div class="row">
-  @for (tab of catalogueService.CONF.tabs | keyvalue; track tab.key) {
+  @for (tab of tabs | keyvalue; track tab.key) {
     <div class="col-md-6">
       <div class="card mb-3">
         <div class="card-body">

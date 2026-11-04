@@ -1,51 +1,51 @@
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { MarkdownComponent, MarkdownModule } from 'ngx-markdown';
-import { MomentModule } from 'ngx-moment';
-import { of } from 'rxjs';
+import { provideRouter } from '@angular/router';
+import { MarkdownComponent, provideMarkdown } from 'ngx-markdown';
 import { take } from 'rxjs/operators';
 import { Repository } from 'src/@types';
-import { EmojiFixupPipe } from '../pipes/emoji-fixup.pipe';
 import { RepoDetailsComponent } from './repo-details.component';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+
+const RETURN_URL_KEY = 'azerothcore.catalogue.returnUrl';
+
+const repository = (extra: Partial<Repository> = {}) =>
+  ({
+    id: 215361574,
+    name: 'mod-bg-twinpeaks',
+    full_name: 'Helias/mod-bg-twinpeaks',
+    description: 'Twin Peaks battleground',
+    html_url: 'https://github.com/Helias/mod-bg-twinpeaks',
+    default_branch: 'master',
+    owner: { login: 'Helias' },
+    stargazers_count: 31,
+    forks_count: 4,
+    subscribers_count: 2,
+    open_issues_count: 1,
+    created_at: '2019-10-15T00:00:00Z',
+    pushed_at: '2026-01-01T00:00:00Z',
+    topics: ['azerothcore-module'],
+    ...extra,
+  }) as Repository;
+
+const configure = () => TestBed.configureTestingModule({ providers: [provideRouter([]), provideMarkdown()] });
+
+const create = (repo: Repository, readme = ''): ComponentFixture<RepoDetailsComponent> => {
+  const fixture = TestBed.createComponent(RepoDetailsComponent);
+  fixture.componentRef.setInput('data', { repo, readme });
+  fixture.detectChanges();
+  return fixture;
+};
 
 describe('RepoDetailsComponent README images', () => {
   const renderReadme = async (readme: string, defaultBranch = 'master'): Promise<HTMLElement> => {
-    const repo = {
-      id: 215361574,
-      name: 'mod-bg-twinpeaks',
-      full_name: 'Helias/mod-bg-twinpeaks',
-      description: 'Twin Peaks battleground',
-      html_url: 'https://github.com/Helias/mod-bg-twinpeaks',
-      default_branch: defaultBranch,
-      owner: { login: 'Helias' },
-      stargazers_count: 31,
-      forks_count: 4,
-      subscribers_count: 2,
-      open_issues_count: 1,
-      created_at: '2019-10-15T00:00:00Z',
-      pushed_at: '2026-01-01T00:00:00Z',
-      topics: ['azerothcore-module'],
-    } as unknown as Repository;
-
-    await TestBed.configureTestingModule({
-      declarations: [RepoDetailsComponent, EmojiFixupPipe],
-      imports: [RouterTestingModule, FontAwesomeModule, MomentModule, MarkdownModule.forRoot()],
-      providers: [{ provide: ActivatedRoute, useValue: { data: of({ data: { repo, readme, logo: 'https://example.com/logo.png' } }) } }],
-    }).compileComponents();
-
-    const fixture = TestBed.createComponent(RepoDetailsComponent);
-    fixture.detectChanges();
+    configure();
+    const fixture = create(repository({ default_branch: defaultBranch }), readme);
     const markdown: MarkdownComponent = fixture.debugElement.query(By.directive(MarkdownComponent)).componentInstance;
     await markdown.ready.pipe(take(1)).toPromise();
     return fixture.nativeElement.querySelector('#readme-markdown');
   };
 
-  const sources = (readme: HTMLElement): string[] => Array.from(readme.querySelectorAll('img')).map((img) => img.getAttribute('src'));
+  const sources = (readme: HTMLElement) => Array.from(readme.querySelectorAll('img')).map((img) => img.getAttribute('src'));
 
   const cases: { name: string; readme: string; want: string[] }[] = [
     {
@@ -71,7 +71,10 @@ describe('RepoDetailsComponent README images', () => {
     {
       name: 'every image in the README',
       readme: '![one](one.png)\n\n![two](two.png)',
-      want: ['https://github.com/Helias/mod-bg-twinpeaks/raw/master/one.png', 'https://github.com/Helias/mod-bg-twinpeaks/raw/master/two.png'],
+      want: [
+        'https://github.com/Helias/mod-bg-twinpeaks/raw/master/one.png',
+        'https://github.com/Helias/mod-bg-twinpeaks/raw/master/two.png',
+      ],
     },
     {
       name: 'nothing for an https url',
@@ -97,58 +100,82 @@ describe('RepoDetailsComponent README images', () => {
   });
 
   it('should resolve against the default branch of the repository', async () => {
-    expect(sources(await renderReadme('![icon](icon.png)', 'main'))).toEqual(['https://github.com/Helias/mod-bg-twinpeaks/raw/main/icon.png']);
+    expect(sources(await renderReadme('![icon](icon.png)', 'main'))).toEqual([
+      'https://github.com/Helias/mod-bg-twinpeaks/raw/main/icon.png',
+    ]);
   });
 
   it('should leave image examples inside code blocks untouched', async () => {
     const readme = await renderReadme('```html\n<img src="images/map.png">\n```');
 
-    expect(readme.querySelector('code').textContent).toContain('<img src="images/map.png">');
+    expect(readme.querySelector('code')?.textContent).toContain('<img src="images/map.png">');
+  });
+
+  it('should replace emoji shortcodes', async () => {
+    const readme = await renderReadme('Hello :smile:');
+
+    expect(readme.textContent).toContain('Hello 😄');
   });
 });
 
 describe('RepoDetailsComponent', () => {
-  let component: RepoDetailsComponent;
-  let fixture: ComponentFixture<RepoDetailsComponent>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-    declarations: [RepoDetailsComponent],
-    imports: [RouterTestingModule, FontAwesomeModule],
-    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-}).compileComponents();
-  });
+  const backLink = (fixture: ComponentFixture<RepoDetailsComponent>) =>
+    fixture.nativeElement.querySelector('.breadcrumb a').getAttribute('href');
 
   beforeEach(() => {
     sessionStorage.clear();
-    fixture = TestBed.createComponent(RepoDetailsComponent);
-    component = fixture.componentInstance;
+    configure();
+  });
+
+  afterEach(() => sessionStorage.clear());
+
+  it('should show the repository and set the page title', () => {
+    const fixture = create(repository());
+    const element: HTMLElement = fixture.nativeElement;
+
+    expect(element.querySelector('h1')?.textContent).toBe('mod-bg-twinpeaks');
+    expect(element.querySelector('.repo-hero-description')?.textContent).toBe('Twin Peaks battleground');
+    expect(window.parent.document.title).toBe('mod-bg-twinpeaks');
+  });
+
+  it('should fall back to the default logo when the repository has no icon', () => {
+    const fixture = create(repository());
+    const logo: HTMLImageElement = fixture.nativeElement.querySelector('.repo-hero-logo');
+    expect(logo.getAttribute('src')).toBe('https://raw.githubusercontent.com/Helias/mod-bg-twinpeaks/master/icon.png');
+
+    logo.dispatchEvent(new Event('error'));
     fixture.detectChanges();
+
+    expect(logo.getAttribute('src')).toBe('https://avatars0.githubusercontent.com/u/20147732?v=4');
   });
 
-  afterEach(() => {
-    sessionStorage.clear();
-  });
+  it('should try the icon of the new repository when the route data changes', () => {
+    const fixture = create(repository());
+    const logo: HTMLImageElement = fixture.nativeElement.querySelector('.repo-hero-logo');
+    logo.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+    fixture.componentRef.setInput('data', { repo: repository({ full_name: 'Helias/other' }), readme: '' });
+    fixture.detectChanges();
+
+    expect(logo.getAttribute('src')).toBe('https://raw.githubusercontent.com/Helias/other/master/icon.png');
   });
 
   it('should use the stored catalogue route for the back link', () => {
-    sessionStorage.setItem('azerothcore.catalogue.returnHash', '#/tab/modules');
+    sessionStorage.setItem(RETURN_URL_KEY, '/tab/modules');
 
-    const restoredFixture = TestBed.createComponent(RepoDetailsComponent);
-
-    expect(restoredFixture.componentInstance.returnHash).toBe('#/tab/modules');
-    restoredFixture.destroy();
+    expect(backLink(create(repository()))).toBe('/tab/modules');
   });
 
   it('should fall back to the catalogue home for invalid return routes', () => {
-    sessionStorage.setItem('azerothcore.catalogue.returnHash', 'https://example.com');
+    sessionStorage.setItem(RETURN_URL_KEY, 'https://example.com');
 
-    const restoredFixture = TestBed.createComponent(RepoDetailsComponent);
+    expect(backLink(create(repository()))).toBe('/home');
+  });
 
-    expect(restoredFixture.componentInstance.returnHash).toBe('#/home');
-    restoredFixture.destroy();
+  it('should not link back to another details page', () => {
+    sessionStorage.setItem(RETURN_URL_KEY, '/details/1');
+
+    expect(backLink(create(repository()))).toBe('/home');
   });
 });

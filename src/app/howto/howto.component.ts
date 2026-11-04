@@ -1,14 +1,17 @@
-import { Component } from '@angular/core';
+import { KeyValuePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCaretLeft } from '@fortawesome/free-solid-svg-icons';
 import { CatalogueService } from '../services/catalogue/catalogue.service';
-import { faCaretLeft, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    selector: 'app-howto',
-    templateUrl: './howto.component.html',
-    standalone: false
+  selector: 'app-howto',
+  templateUrl: './howto.component.html',
+  imports: [FaIconComponent, KeyValuePipe, RouterLink],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HowtoComponent {
-  constructor(public catalogueService: CatalogueService) {}
-
-  readonly faCaretLeft: IconDefinition = faCaretLeft;
+  protected readonly tabs = inject(CatalogueService).config.tabs;
+  protected readonly faCaretLeft = faCaretLeft;
 }

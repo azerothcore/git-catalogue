@@ -1,331 +1,183 @@
 import { HttpClient } from '@angular/common/http';
-import { Inject, Injectable } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { catchError, map, reduce, tap } from 'rxjs/operators';
-import { RepositoriesPage, Repository } from 'src/@types';
-import { Config, Tab } from './catalogue.model';
+import { inject, Injectable, Injector, Signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { defer, EMPTY, Observable, of } from 'rxjs';
+import { catchError, expand, map, reduce, shareReplay, tap } from 'rxjs/operators';
+import { Organization, RepositoriesPage, Repository } from 'src/@types';
 import { APP_CONFIG } from '../config/config.token';
+import { Tab } from './catalogue.model';
 
-@Injectable({
-  providedIn: 'root',
-})
+const CACHE_TTL_MS = 30 * 60 * 1000;
+const DEFAULT_PRE_GENERATED_FILE_URL = 'data/catalogue.json';
+
+type PreGeneratedCatalogue = {
+  organizations?: Record<string, Record<string, Repository[]>>;
+};
+
+function tabCacheKey({ org = 'default-org', topic = '' }: Tab): string {
+  return `${org}-${topic}`;
+}
+
+// the pre-generated file doesn't always carry these fields, and the templates rely on them
+function normalizeRepo(repo: Repository): Repository {
+  const now = new Date().toISOString();
+  const ownerLogin = repo.full_name?.includes('/') ? repo.full_name.split('/')[0] : '';
+
+  return {
+    ...repo,
+    owner: repo.owner ?? ({ login: ownerLogin } as Organization),
+    subscribers_count: repo.subscribers_count ?? 0,
+    stargazers_count: repo.stargazers_count ?? 0,
+    forks_count: repo.forks_count ?? 0,
+    created_at: repo.created_at || now,
+    pushed_at: repo.pushed_at || repo.updated_at || now,
+    default_branch: repo.default_branch || 'master',
+  };
+}
+
+@Injectable({ providedIn: 'root' })
 export class CatalogueService {
-  CONF: Config;
-  items$: Record<string, Observable<Repository[]>> = {};
-  private preGeneratedData: any | null = null;
-  private preGenIndexById: Map<number, Repository> | null = null;
+  private readonly http = inject(HttpClient);
+  private readonly injector = inject(Injector);
 
-  constructor(
-    private http: HttpClient,
-    private route: ActivatedRoute,
-    @Inject(APP_CONFIG) conf: Config
-  ) {
-    this.CONF = conf;
-    // Initialize items immediately; config is preloaded during APP_INITIALIZER
-    for (const k of Object.keys(this.CONF.tabs)) {
-      this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
-    }
-  }
+  readonly config = inject(APP_CONFIG);
 
-  private getLocalItems(tab: Tab): Observable<Repository[]> {
-    const { org = 'default-org', topic = '' } = tab;
-    const key = `${org}-${topic}`;
-    const item = localStorage.getItem(key);
+  private readonly tabItemsByName = new Map<string, Signal<Repository[] | undefined>>();
 
-    if (item && !this.expireMinutes(30, JSON.parse(item).timeDate)) {
-      return of(JSON.parse(item).value);
-    }
+  // every tab reads the same file, so one download is enough
+  private readonly preGeneratedFile$ = defer(() =>
+    this.http.get<PreGeneratedCatalogue>(this.config.preGeneratedFileUrl || DEFAULT_PRE_GENERATED_FILE_URL),
+  ).pipe(shareReplay(1));
 
-    // Check if we should use pre-generated file
-    if (this.CONF?.usePreGeneratedFile) {
-      return this.getItemsFromPreGeneratedFile(org, topic, key);
-    }
-
-    // Use original API method
-    return this.getItemsFromAPI(org, topic, key);
-  }
-
-  private getItemsFromPreGeneratedFile(org: string, topic: string, key: string): Observable<Repository[]> {
-    const fileUrl = this.CONF.preGeneratedFileUrl || 'data/catalogue.json';
-
-    return this.http.get<any>(fileUrl).pipe(
-      map(data => {
-        // Navigate the JSON structure: organizations -> org -> topic
-        if (data.organizations && data.organizations[org] && data.organizations[org][topic]) {
-          return data.organizations[org][topic];
-        }
-        return [];
-      }),
-      tap(repos => this.cacheRepos(key, repos)),
-      catchError(error => {
-        console.warn('Failed to fetch from pre-generated file, falling back to API', error);
-        return this.getItemsFromAPI(org, topic, key);
-      })
-    );
-  }
-
-  private getItemsFromAPI(org: string, topic: string, key: string): Observable<Repository[]> {
-    const topicFilter = topic ? `+topic:${topic}` : '';
-
-    // Check if this tab should use global search
-    const tab = Object.values(this.CONF.tabs).find(t => t.org === org && t.topic === topic);
-    const useGlobalSearch = tab?.globalSearch ?? this.CONF.globalSearch ?? false;
-
-    // Only include org filter if not using global search
-    const orgFilter = useGlobalSearch ? '' : (org ? `org:${org}+` : '');
-
-    const perPage = this.CONF.perPage;
-    let totalSize = null;
-
-    const getPage = (page: number) => {
-      return this.http.get<RepositoriesPage>(
-        `https://api.github.com/search/repositories?page=${page}&per_page=${this.CONF.perPage}&q=${orgFilter}fork:true${topicFilter}+sort:stars`,
+  /** Repositories of a tab, undefined until loaded. The first call starts the fetch. */
+  tabItems(tabName: string): Signal<Repository[] | undefined> {
+    let items = this.tabItemsByName.get(tabName);
+    if (!items) {
+      const items$ = this.loadTab(this.config.tabs[tabName]).pipe(
+        // toSignal would rethrow the error on every read and break the whole template
+        catchError((error) => {
+          console.error(error);
+          return EMPTY;
+        }),
       );
-    };
-
-    const pages$ = new Observable<Repository[]>((observer) => {
-      const fetchPage = (page) =>
-        getPage(page)
-          .pipe(
-            map((res) => {
-              if (!totalSize) {
-                totalSize = res.total_count;
-              }
-              return res.items;
-            }),
-          )
-          .subscribe((items) => {
-            observer.next(items);
-            const hasNextPage = perPage * page < totalSize;
-            if (hasNextPage) {
-              fetchPage(page + 1);
-            } else {
-              observer.complete();
-            }
-          });
-
-      fetchPage(1);
-    }).pipe(reduce((acc, val) => acc.concat(val), []));
-
-    return this.cacheable(pages$, key);
-  }
-
-  private cacheRepos(key: string, repos: Repository[]) {
-    localStorage.setItem(key, JSON.stringify({ timeDate: new Date().getTime(), value: repos }));
-  }
-
-  cacheable<T extends Repository | Repository[]>(obs: Observable<T>, key: string): Observable<T> {
-    return obs.pipe(
-      tap({
-        next: (data: T) => {
-          localStorage.setItem(key, JSON.stringify({ timeDate: new Date().getTime(), value: data }));
-        },
-        error: (err) => {
-          console.error(err);
-        },
-      }),
-    );
-  }
-
-  private expireMinutes(minutes: number, timeDate: number): boolean {
-    const diff = Math.abs(new Date().getTime() - timeDate);
-    const diffMinutes = Math.floor(diff / 1000) / 60;
-    return minutes < diffMinutes;
+      items = toSignal(items$, { injector: this.injector });
+      this.tabItemsByName.set(tabName, items);
+    }
+    return items;
   }
 
   getLocalRepo(id: number): Observable<Repository> {
     const key = `repo-${id}`;
-
-    const item = localStorage.getItem(key);
-    if (item && !this.expireMinutes(30, JSON.parse(item).timeDate)) {
-      return of(JSON.parse(item).value);
+    const cached = this.readCache<Repository>(key);
+    if (cached) {
+      return of(cached);
     }
 
-    // If using the pre-generated file, try to resolve from there instead of GitHub API
-    if (this.isUsingPreGeneratedFile()) {
-      // 1) Try to find the repo in cached tab lists first (fast path)
-      const cachedRepo = this.findRepoInTabCaches(id);
-      if (cachedRepo) {
-        const normalized = this.normalizeRepo(cachedRepo);
-        localStorage.setItem(key, JSON.stringify({ timeDate: new Date().getTime(), value: normalized }));
-        return of(normalized);
-      }
+    const repo$ = this.config.usePreGeneratedFile
+      ? this.findPreGeneratedRepo(id).pipe(
+          map(normalizeRepo),
+          catchError(() => this.fetchRepo(id)),
+        )
+      : this.fetchRepo(id);
 
-      // 2) Load pre-generated data and search globally
-      return this.loadPreGeneratedData().pipe(
-        map(() => {
-          const repo = this.findRepoInPreGenIndex(id);
-          if (!repo) {
-            throw new Error('Repo not found in pre-generated data');
-          }
-          const normalized = this.normalizeRepo(repo);
-          localStorage.setItem(key, JSON.stringify({ timeDate: new Date().getTime(), value: normalized }));
-          return normalized;
-        }),
-        // If anything fails, fall back to API
-        catchError(() => this.http.get<Repository>(`https://api.github.com/repositories/${id}`)),
-        tap((repo) => localStorage.setItem(key, JSON.stringify({ timeDate: new Date().getTime(), value: repo })))
-      );
-    }
-
-    // Default: use GitHub API
-    return this.cacheable(this.http.get<Repository>(`https://api.github.com/repositories/${id}`), key);
+    return repo$.pipe(tap((repo) => this.writeCache(key, repo)));
   }
 
-  get confTabsKeys(): string[] {
-    return this.CONF ? Object.keys(this.CONF.tabs) : [];
-  }
-
-  get confTabPaths(): string[] {
-    return this.CONF ? Object.values(this.CONF.tabs).map((tab) => tab.path) : [];
-  }
-
-  get tabIndex(): number {
-    if (!this.confTabPaths) {
-      return -1;
-    }
-
-    const tabName = this.route.snapshot.paramMap.get('tab');
-    return tabName ? this.confTabPaths.indexOf(`/${tabName}`) : 0;
-  }
-
-  getRawReadmeDefault(repo: Repository): Observable<string> {
-    return this.getRawReadme(repo.full_name, repo.default_branch);
-  }
-
-  getRawReadme(repo: string, defaultBranch: string): Observable<string> {
-    return this.http
-      .get(`https://raw.githubusercontent.com/${repo}/${defaultBranch}/README.md?time=${Date.now()}`, {
+  getReadme(repo: Repository): Observable<string> {
+    const fetchFile = (path: string) =>
+      this.http.get(`https://raw.githubusercontent.com/${repo.full_name}/${repo.default_branch}/${path}?time=${Date.now()}`, {
         responseType: 'text',
-      })
-      .pipe(
-        catchError(() =>
-          this.http
-            .get(`https://raw.githubusercontent.com/${repo}/${defaultBranch}/.github/README.md?time=${Date.now()}`, {
-              responseType: 'text',
-            })
-            .pipe(catchError(() => of('No README found'))),
-        ),
-      );
-  }
+      });
 
-  // New methods for managing data source mode
-  toggleDataSource(): void {
-    if (this.CONF) {
-      this.CONF.usePreGeneratedFile = !this.CONF.usePreGeneratedFile;
-      this.clearCache();
-      this.refreshItems();
-    }
-  }
-
-  setDataSource(usePreGeneratedFile: boolean): void {
-    if (this.CONF) {
-      this.CONF.usePreGeneratedFile = usePreGeneratedFile;
-      this.clearCache();
-      this.refreshItems();
-    }
-  }
-
-  isUsingPreGeneratedFile(): boolean {
-    return this.CONF?.usePreGeneratedFile || false;
-  }
-
-  private clearCache(): void {
-    for (const tabKey of Object.keys(this.CONF.tabs)) {
-      const tab = this.CONF.tabs[tabKey];
-      const { org = 'default-org', topic = '' } = tab;
-      const key = `${org}-${topic}`;
-      localStorage.removeItem(key);
-    }
-  }
-
-  private refreshItems(): void {
-    for (const k of Object.keys(this.CONF.tabs)) {
-      this.items$[k] = this.getLocalItems(this.CONF.tabs[k]);
-    }
-  }
-
-  // Pre-generated data helpers
-  private loadPreGeneratedData(): Observable<any> {
-    if (this.preGeneratedData && this.preGenIndexById) {
-      return of(this.preGeneratedData);
-    }
-    const fileUrl = this.CONF?.preGeneratedFileUrl || 'data/catalogue.json';
-    return this.http.get<any>(fileUrl).pipe(
-      tap((data) => {
-        this.preGeneratedData = data;
-        this.buildPreGenIndex(data);
-      })
+    return fetchFile('README.md').pipe(
+      catchError(() => fetchFile('.github/README.md')),
+      catchError(() => of('No README found')),
     );
   }
 
-  private buildPreGenIndex(data: any): void {
-    this.preGenIndexById = new Map<number, Repository>();
-    if (!data || !data.organizations) {
-      return;
+  private loadTab(tab: Tab): Observable<Repository[]> {
+    const key = tabCacheKey(tab);
+    const cached = this.readCache<Repository[]>(key);
+    if (cached) {
+      return of(cached);
     }
-    const orgs = data.organizations;
-    for (const orgKey of Object.keys(orgs)) {
-      const topics = orgs[orgKey];
-      for (const topicKey of Object.keys(topics || {})) {
-        const repos: Repository[] = topics[topicKey] || [];
-        for (const repo of repos) {
-          if (repo && typeof repo.id === 'number') {
-            this.preGenIndexById.set(repo.id, repo);
-          }
+
+    const repos$ = this.config.usePreGeneratedFile ? this.loadTabFromFile(tab) : this.searchRepos(tab);
+    return repos$.pipe(tap((repos) => this.writeCache(key, repos)));
+  }
+
+  private loadTabFromFile(tab: Tab): Observable<Repository[]> {
+    const { org = 'default-org', topic = '' } = tab;
+
+    return this.preGeneratedFile$.pipe(
+      map((file) => file.organizations?.[org]?.[topic] ?? []),
+      catchError((error) => {
+        console.warn('Failed to fetch from pre-generated file, falling back to API', error);
+        return this.searchRepos(tab);
+      }),
+    );
+  }
+
+  private searchRepos(tab: Tab): Observable<Repository[]> {
+    const { org = 'default-org', topic } = tab;
+    const { perPage, globalSearch } = this.config;
+    const orgFilter = (tab.globalSearch ?? globalSearch ?? false) || !org ? '' : `org:${org}+`;
+    const topicFilter = topic ? `+topic:${topic}` : '';
+
+    const fetchPage = (page: number) =>
+      this.http.get<RepositoriesPage>(
+        `https://api.github.com/search/repositories?page=${page}&per_page=${perPage}&q=${orgFilter}fork:true${topicFilter}+sort:stars`,
+      );
+
+    return fetchPage(1).pipe(
+      expand((result, index) => (perPage * (index + 1) < result.total_count ? fetchPage(index + 2) : EMPTY)),
+      reduce((repos, result) => repos.concat(result.items), [] as Repository[]),
+    );
+  }
+
+  private fetchRepo(id: number): Observable<Repository> {
+    return this.http.get<Repository>(`https://api.github.com/repositories/${id}`);
+  }
+
+  private findPreGeneratedRepo(id: number): Observable<Repository> {
+    const listed = this.findInCachedTabs(id);
+    if (listed) {
+      return of(listed);
+    }
+
+    return this.preGeneratedFile$.pipe(
+      map((file) => {
+        const repos = Object.values(file.organizations ?? {}).flatMap((topics) => Object.values(topics ?? {}).flat());
+        const repo = repos.find((candidate) => candidate?.id === id);
+        if (!repo) {
+          throw new Error('Repo not found in pre-generated data');
         }
-      }
-    }
+        return repo;
+      }),
+    );
   }
 
-  private findRepoInPreGenIndex(id: number): Repository | null {
-    if (!this.preGenIndexById) {
-      return null;
-    }
-    return this.preGenIndexById.get(id) || null;
-  }
-
-  private findRepoInTabCaches(id: number): Repository | null {
-    if (!this.CONF) {
-      return null;
-    }
-    for (const tabKey of Object.keys(this.CONF.tabs)) {
-      const tab = this.CONF.tabs[tabKey];
-      const { org = 'default-org', topic = '' } = tab;
-      const key = `${org}-${topic}`;
-      const item = localStorage.getItem(key);
-      if (!item) {
-        continue;
-      }
-      const parsed = JSON.parse(item);
-      if (this.expireMinutes(30, parsed.timeDate)) {
-        continue;
-      }
-      const repos: Repository[] = parsed.value || [];
-      const match = repos.find((r) => r && r.id === Number(id));
+  private findInCachedTabs(id: number): Repository | undefined {
+    for (const tab of Object.values(this.config.tabs)) {
+      const match = this.readCache<Repository[]>(tabCacheKey(tab))?.find((repo) => repo?.id === id);
       if (match) {
         return match;
       }
     }
-    return null;
+    return undefined;
   }
 
-  private normalizeRepo(repo: Repository): Repository {
-    // Ensure essential fields exist to avoid template issues
-    const safe = { ...repo } as any;
-    if (!safe.owner) {
-      const ownerLogin = typeof safe.full_name === 'string' && safe.full_name.includes('/')
-        ? safe.full_name.split('/')[0]
-        : '';
-      safe.owner = { login: ownerLogin } as any;
+  private readCache<T>(key: string): T | null {
+    const entry = localStorage.getItem(key);
+    if (!entry) {
+      return null;
     }
-    safe.subscribers_count = typeof safe.subscribers_count === 'number' ? safe.subscribers_count : 0;
-    safe.stargazers_count = typeof safe.stargazers_count === 'number' ? safe.stargazers_count : 0;
-    safe.forks_count = typeof safe.forks_count === 'number' ? safe.forks_count : 0;
-    safe.created_at = safe.created_at || new Date().toISOString();
-    safe.pushed_at = safe.pushed_at || safe.updated_at || new Date().toISOString();
-    safe.default_branch = safe.default_branch || 'master';
-    return safe as Repository;
+
+    const { timeDate, value } = JSON.parse(entry);
+    return Math.abs(Date.now() - timeDate) > CACHE_TTL_MS ? null : value;
+  }
+
+  private writeCache(key: string, value: Repository | Repository[]): void {
+    localStorage.setItem(key, JSON.stringify({ timeDate: Date.now(), value }));
   }
 }

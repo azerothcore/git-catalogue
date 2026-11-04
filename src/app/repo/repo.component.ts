@@ -1,27 +1,32 @@
-import { Component, Input } from '@angular/core';
-import { faStar, IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { MomentModule } from 'ngx-moment';
+import { Repository } from 'src/@types';
+import { FALLBACK_REPO_ICON, repoIconUrl } from '../services/catalogue/repo-icon';
+
+const MAX_VISIBLE_TOPICS = 4;
 
 @Component({
-    selector: 'app-repo',
-    templateUrl: './repo.component.html',
-    styleUrls: ['./repo.component.scss'],
-    standalone: false
+  selector: 'app-repo',
+  templateUrl: './repo.component.html',
+  styleUrl: './repo.component.scss',
+  imports: [FaIconComponent, MomentModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RepoComponent {
-  @Input() id: number;
-  @Input() name: string;
-  @Input() stars: number;
-  @Input() created: Date;
-  @Input() updated: Date;
-  @Input() description: string;
-  @Input() fullName: string;
-  @Input() topics: string[] = [];
-  @Input() starDelay = 0;
+  readonly repo = input.required<Repository>();
+  readonly starDelay = input(0);
 
-  get starList(): number[] {
-    const count = this.stars > 300 ? 3 : this.stars > 100 ? 2 : 1;
+  protected readonly faStar = faStar;
+  protected readonly fallbackIcon = FALLBACK_REPO_ICON;
+
+  protected readonly icon = linkedSignal(() => repoIconUrl(this.repo().full_name));
+  protected readonly visibleTopics = computed(() => (this.repo().topics ?? []).slice(0, MAX_VISIBLE_TOPICS));
+  protected readonly isPopular = computed(() => this.repo().stargazers_count > 300);
+  protected readonly starList = computed(() => {
+    const count = this.isPopular() ? 3 : this.repo().stargazers_count > 100 ? 2 : 1;
     return Array.from({ length: count }, (_, index) => index);
-  }
-
-  readonly faStar: IconDefinition = faStar;
+  });
 }

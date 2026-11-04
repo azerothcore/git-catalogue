@@ -1,146 +1,137 @@
 <div class="details">
-  @if (data$ | async; as data) {
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a [href]="returnHash"><fa-icon [icon]="faCaretLeft"></fa-icon> Catalogue</a>
-      <span class="sep">/</span>
-      <a [href]="`https://github.com/${data.repo.owner.login}`" target="_blank" rel="noopener">{{ data.repo.owner.login }}</a>
-      <span class="sep">/</span>
-      <span class="current">{{ data.repo.name }}</span>
-    </nav>
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a [routerLink]="returnUrl"><fa-icon [icon]="faCaretLeft" /> Catalogue</a>
+    <span class="sep">/</span>
+    <a [href]="ownerUrl()" target="_blank" rel="noopener">{{ repo().owner.login }}</a>
+    <span class="sep">/</span>
+    <span class="current">{{ repo().name }}</span>
+  </nav>
 
-    <header class="repo-hero">
-      <img
-        class="repo-hero-logo"
-        [src]="data.logo"
-        [alt]="data.repo.full_name"
-        (error)="data.logo = 'https://avatars0.githubusercontent.com/u/20147732?v=4'"
-      />
+  <header class="repo-hero">
+    <img class="repo-hero-logo" [src]="logo()" [alt]="repo().full_name" (error)="logo.set(fallbackIcon)" />
 
-      <div class="repo-hero-body">
-        <div class="repo-hero-title">
-          <h1>{{ data.repo.name }}</h1>
-          <span class="repo-hero-owner">
-            by
-            <a [href]="`https://github.com/${data.repo.owner.login}`" target="_blank" rel="noopener">{{ data.repo.owner.login }}</a>
-          </span>
-        </div>
-
-        @if (data.repo.description) {
-          <p class="repo-hero-description">{{ data.repo.description }}</p>
-        }
-
-        @if (data.repo.topics?.length) {
-          <div class="repo-topics">
-            @for (topic of data.repo.topics; track topic) {
-              <span class="badge">{{ topic }}</span>
-            }
-          </div>
-        }
+    <div class="repo-hero-body">
+      <div class="repo-hero-title">
+        <h1>{{ repo().name }}</h1>
+        <span class="repo-hero-owner">
+          by
+          <a [href]="ownerUrl()" target="_blank" rel="noopener">{{ repo().owner.login }}</a>
+        </span>
       </div>
 
-      <div class="repo-hero-actions">
-        <a class="btn btn-dark" [href]="data.repo.html_url" target="_blank" rel="noopener">
-          <fa-icon [icon]="faGithub"></fa-icon>
-          GitHub
-        </a>
-        <a
-          class="btn btn-outline-secondary"
-          [href]="`${data.repo.html_url}/archive/${data.repo.default_branch}.zip`"
-          target="_blank"
-          rel="noopener"
-        >
-          Download ZIP
-        </a>
-      </div>
-    </header>
+      @if (repo().description; as description) {
+        <p class="repo-hero-description">{{ description }}</p>
+      }
 
-    <section class="stats" aria-label="Repository stats">
-      <div class="stat">
-        <span class="stat-value">{{ data.repo.stargazers_count }}</span>
-        <span class="stat-label"><fa-icon [icon]="faStar"></fa-icon> Stars</span>
-      </div>
-      <div class="stat">
-        <span class="stat-value">{{ data.repo.forks_count }}</span>
-        <span class="stat-label"><fa-icon [icon]="faCodeBranch"></fa-icon> Forks</span>
-      </div>
-      <div class="stat">
-        <span class="stat-value">{{ data.repo.subscribers_count }}</span>
-        <span class="stat-label"><fa-icon [icon]="faEye"></fa-icon> Watchers</span>
-      </div>
-      <div class="stat">
-        <span class="stat-value">{{ data.repo.open_issues_count || 0 }}</span>
-        <span class="stat-label"><fa-icon [icon]="faExclamationCircle"></fa-icon> Open issues</span>
-      </div>
-      @if (data.repo.language) {
-        <div class="stat">
-          <span class="stat-value">{{ data.repo.language }}</span>
-          <span class="stat-label"><fa-icon [icon]="faCode"></fa-icon> Language</span>
+      @if (repo().topics?.length) {
+        <div class="repo-topics">
+          @for (topic of repo().topics; track topic) {
+            <span class="badge">{{ topic }}</span>
+          }
         </div>
       }
-      @if (data.repo.license) {
-        <div class="stat">
-          <span class="stat-value">{{ data.repo.license.spdx_id }}</span>
-          <span class="stat-label"><fa-icon [icon]="faBalanceScale"></fa-icon> License</span>
-        </div>
-      }
-    </section>
-
-    <div class="details-layout">
-      <article class="card readme-card">
-        <h2 class="section-title">README</h2>
-        <div id="readme-markdown" class="markdown-body" #readme>
-          <markdown (ready)="resolveReadmeImages(readme, data.repo)">
-            {{ data.readme | emojiFixup }}
-          </markdown>
-        </div>
-      </article>
-
-      <aside class="card about-card">
-        <h2 class="section-title">About</h2>
-
-        <dl class="about-list">
-          <div>
-            <dt>Repository</dt>
-            <dd>
-              <a [href]="data.repo.html_url" target="_blank" rel="noopener">{{ data.repo.full_name }}</a>
-            </dd>
-          </div>
-          <div>
-            <dt>Owner</dt>
-            <dd>
-              <a [href]="`https://github.com/${data.repo.owner.login}`" target="_blank" rel="noopener">{{ data.repo.owner.login }}</a>
-            </dd>
-          </div>
-          <div>
-            <dt>Default branch</dt>
-            <dd>{{ data.repo.default_branch }}</dd>
-          </div>
-          <div>
-            <dt>Created</dt>
-            <dd>{{ data.repo.created_at | amTimeAgo }}</dd>
-          </div>
-          <div>
-            <dt>Last update</dt>
-            <dd>{{ data.repo.pushed_at | amTimeAgo }}</dd>
-          </div>
-          @if (data.repo.homepage) {
-            <div>
-              <dt>Homepage</dt>
-              <dd>
-                <a [href]="data.repo.homepage" target="_blank" rel="noopener">{{ data.repo.homepage }}</a>
-              </dd>
-            </div>
-          }
-          @if (data.repo.license) {
-            <div>
-              <dt>License</dt>
-              <dd>{{ data.repo.license.spdx_id }}</dd>
-            </div>
-          }
-        </dl>
-
-        <a class="btn btn-outline-primary btn-block" [href]="data.repo.html_url" target="_blank" rel="noopener">Open on GitHub</a>
-      </aside>
     </div>
-  }
+
+    <div class="repo-hero-actions">
+      <a class="btn btn-dark" [href]="repo().html_url" target="_blank" rel="noopener">
+        <fa-icon [icon]="faGithub" />
+        GitHub
+      </a>
+      <a
+        class="btn btn-outline-secondary"
+        [href]="`${repo().html_url}/archive/${repo().default_branch}.zip`"
+        target="_blank"
+        rel="noopener"
+      >
+        Download ZIP
+      </a>
+    </div>
+  </header>
+
+  <section class="stats" aria-label="Repository stats">
+    <div class="stat">
+      <span class="stat-value">{{ repo().stargazers_count }}</span>
+      <span class="stat-label"><fa-icon [icon]="faStar" /> Stars</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{{ repo().forks_count }}</span>
+      <span class="stat-label"><fa-icon [icon]="faCodeBranch" /> Forks</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{{ repo().subscribers_count }}</span>
+      <span class="stat-label"><fa-icon [icon]="faEye" /> Watchers</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{{ repo().open_issues_count || 0 }}</span>
+      <span class="stat-label"><fa-icon [icon]="faExclamationCircle" /> Open issues</span>
+    </div>
+    @if (repo().language; as language) {
+      <div class="stat">
+        <span class="stat-value">{{ language }}</span>
+        <span class="stat-label"><fa-icon [icon]="faCode" /> Language</span>
+      </div>
+    }
+    @if (repo().license; as license) {
+      <div class="stat">
+        <span class="stat-value">{{ license.spdx_id }}</span>
+        <span class="stat-label"><fa-icon [icon]="faBalanceScale" /> License</span>
+      </div>
+    }
+  </section>
+
+  <div class="details-layout">
+    <article class="card readme-card">
+      <h2 class="section-title">README</h2>
+      <div id="readme-markdown" class="markdown-body" #readme>
+        <markdown [data]="data().readme | emojiFixup" (ready)="resolveReadmeImages(readme)" />
+      </div>
+    </article>
+
+    <aside class="card about-card">
+      <h2 class="section-title">About</h2>
+
+      <dl class="about-list">
+        <div>
+          <dt>Repository</dt>
+          <dd>
+            <a [href]="repo().html_url" target="_blank" rel="noopener">{{ repo().full_name }}</a>
+          </dd>
+        </div>
+        <div>
+          <dt>Owner</dt>
+          <dd>
+            <a [href]="ownerUrl()" target="_blank" rel="noopener">{{ repo().owner.login }}</a>
+          </dd>
+        </div>
+        <div>
+          <dt>Default branch</dt>
+          <dd>{{ repo().default_branch }}</dd>
+        </div>
+        <div>
+          <dt>Created</dt>
+          <dd>{{ repo().created_at | amTimeAgo }}</dd>
+        </div>
+        <div>
+          <dt>Last update</dt>
+          <dd>{{ repo().pushed_at | amTimeAgo }}</dd>
+        </div>
+        @if (repo().homepage; as homepage) {
+          <div>
+            <dt>Homepage</dt>
+            <dd>
+              <a [href]="homepage" target="_blank" rel="noopener">{{ homepage }}</a>
+            </dd>
+          </div>
+        }
+        @if (repo().license; as license) {
+          <div>
+            <dt>License</dt>
+            <dd>{{ license.spdx_id }}</dd>
+          </div>
+        }
+      </dl>
+
+      <a class="btn btn-outline-primary btn-block" [href]="repo().html_url" target="_blank" rel="noopener">Open on GitHub</a>
+    </aside>
+  </div>
 </div>

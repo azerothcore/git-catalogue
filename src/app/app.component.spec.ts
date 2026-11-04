@@ -1,22 +1,15 @@
-import { TestBed, waitForAsync } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { AppComponent } from './app.component';
 
 describe('AppComponent', () => {
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        declarations: [AppComponent],
-        imports: [RouterTestingModule],
-        schemas: [NO_ERRORS_SCHEMA]
-      }).compileComponents();
-    }),
-  );
+  it('should render the catalogue and register its custom element', () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
 
-  it('should create the app', () => {
     const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-catalogue')).not.toBeNull();
+    expect(customElements.get('catalogue-element')).toBeDefined();
   });
 });

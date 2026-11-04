@@ -1,4 +1,4 @@
-@if (veilVisible) {
+@if (veilVisible()) {
   <div class="route-veil" aria-hidden="true">
     <div class="route-veil-brand">
       <span class="route-veil-mark"></span>
@@ -9,5 +9,5 @@
 }
 
 <div class="container mt-5">
-  <router-outlet></router-outlet>
+  <router-outlet />
 </div>

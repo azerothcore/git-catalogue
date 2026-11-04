@@ -1,266 +1,320 @@
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { Location } from '@angular/common';
+import { provideLocationMocks } from '@angular/common/testing';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FormsModule } from '@angular/forms';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { APP_CONFIG } from '../services/config/config.token';
-import { Config } from '../services/catalogue/catalogue.model';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatTabGroup } from '@angular/material/tabs';
+import { By } from '@angular/platform-browser';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { Repository } from 'src/@types';
-
+import { Config } from '../services/catalogue/catalogue.model';
+import { CatalogueService } from '../services/catalogue/catalogue.service';
 import { HomeComponent } from './home.component';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+
+const PAGE_KEY = 'azerothcore.catalogue.page';
+const SORT_KEY = 'azerothcore.catalogue.sort';
+const SEARCH_KEY = 'azerothcore.catalogue.search';
+const RETURN_URL_KEY = 'azerothcore.catalogue.returnUrl';
 
 describe('HomeComponent', () => {
-  let component: HomeComponent;
-  let fixture: ComponentFixture<HomeComponent>;
-
-  const REPOS = [
-    { name: 'popular', stargazers_count: 100, created_at: '2019-01-01T00:00:00Z', pushed_at: '2019-06-01T00:00:00Z' },
-    { name: 'recently-pushed', stargazers_count: 10, created_at: '2020-01-01T00:00:00Z', pushed_at: '2024-06-01T00:00:00Z' },
-    { name: 'newest', stargazers_count: 1, created_at: '2023-01-01T00:00:00Z', pushed_at: '2023-06-01T00:00:00Z' },
-  ] as unknown as Repository[];
-
-  const SEARCH_REPOS = [
-    {
-      name: 'mod-eluna',
-      description: 'Lua engine for AzerothCore',
-      topics: ['azerothcore-lua'],
-      language: 'C++',
-      owner: { login: 'azerothcore' },
-      stargazers_count: 5,
+  const repo = (id: number, stars: number, extra: Partial<Repository> = {}) =>
+    ({
+      id,
+      name: `mod-${id}`,
+      full_name: `org/mod-${id}`,
+      stargazers_count: stars,
       created_at: '2020-01-01T00:00:00Z',
-      pushed_at: '2020-01-01T00:00:00Z',
-    },
-    {
-      name: 'mod-transmog',
-      description: 'Transmogrification module',
-      topics: ['azerothcore-module'],
-      language: 'C++',
-      owner: { login: 'azerothcore' },
-      stargazers_count: 50,
-      created_at: '2020-01-01T00:00:00Z',
-      pushed_at: '2020-01-01T00:00:00Z',
-    },
-    {
-      name: 'Rápido',
-      description: 'Accents test',
       topics: [],
-      language: 'Lua',
-      owner: { login: 'someone' },
-      stargazers_count: 1,
-      created_at: '2020-01-01T00:00:00Z',
-      pushed_at: '2020-01-01T00:00:00Z',
+      ...extra,
+    }) as Repository;
+
+  const MODULES = [
+    repo(1, 100, { topics: ['lua', 'module'], language: 'Lua' }),
+    repo(2, 50, { topics: ['module'], language: 'C++', created_at: '2024-01-01T00:00:00Z' }),
+    repo(3, 10, { topics: ['module'], language: 'C++' }),
+  ];
+  const TOOLS = [repo(10, 1)];
+
+  const CONFIG = {
+    pageSize: 2,
+    tabs: {
+      Modules: { topic: 'module', org: 'org', path: '/module' },
+      Tools: { topic: 'tools', org: 'org', path: '/tools' },
     },
-  ] as unknown as Repository[];
+  } as unknown as Config;
 
-  beforeEach(async () => {
-    const MOCK_CONFIG: Config = {
-      page: 0,
-      perPage: 10,
-      pageSize: 8,
-      globalSearch: true,
-      tabs: {
-        Test: { topic: '', org: '', path: '/test', globalSearch: true },
-      },
-      usePreGeneratedFile: false,
-    };
-    await TestBed.configureTestingModule({
-    declarations: [HomeComponent],
-    schemas: [NO_ERRORS_SCHEMA],
-    imports: [RouterTestingModule,
-        FontAwesomeModule,
-        MatTabsModule,
-        MatPaginatorModule,
-        BrowserAnimationsModule,
-        FormsModule],
-    providers: [
-        { provide: APP_CONFIG, useValue: MOCK_CONFIG },
-        {
-            provide: ActivatedRoute,
-            useValue: {
-                snapshot: {
-                    paramMap: {
-                        get: () => null
-                    }
-                }
-            }
-        },
-        provideHttpClient(withInterceptorsFromDi()),
-        provideHttpClientTesting()
-    ]
-}).compileComponents();
-  });
+  let fixture: ComponentFixture<HomeComponent>;
+  let element: HTMLElement;
+  let modules: ReturnType<typeof signal<Repository[] | undefined>>;
 
-  beforeEach(() => {
-    sessionStorage.clear();
+  const configure = (routes: Parameters<typeof provideRouter>[0] = []) => {
+    modules = signal<Repository[] | undefined>(MODULES);
+    const items: Record<string, unknown> = { Modules: modules, Tools: signal(TOOLS) };
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter(routes, withComponentInputBinding()),
+        provideLocationMocks(),
+        { provide: CatalogueService, useValue: { config: CONFIG, tabItems: (label: string) => items[label] } },
+      ],
+    });
+  };
+
+  const create = async () => {
     fixture = TestBed.createComponent(HomeComponent);
-    component = fixture.componentInstance;
+    element = fixture.nativeElement;
+    await settle();
+  };
+
+  const settle = async () => {
     fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
+  const rows = () => Array.from(element.querySelectorAll('.repo-row-name')).map((row) => row.textContent);
+  const paginator = () => fixture.debugElement.query(By.directive(MatPaginator));
+  const searchInput = () => element.querySelector('#search-input') as HTMLInputElement;
+  const sortSelect = () => element.querySelector('#sort') as HTMLSelectElement;
+
+  const type = async (value: string) => {
+    searchInput().value = value;
+    searchInput().dispatchEvent(new Event('input'));
+    await settle();
+  };
+  const pick = async (select: HTMLSelectElement, value: string) => {
+    select.value = value;
+    select.dispatchEvent(new Event('change'));
+    await settle();
+  };
+  const goToPage = async (pageIndex: number) => {
+    paginator().triggerEventHandler('page', { pageIndex });
+    await settle();
+  };
+  const click = async (selector: string, text?: string) => {
+    const target = Array.from(element.querySelectorAll<HTMLElement>(selector)).find(
+      (candidate) => !text || candidate.textContent?.includes(text),
+    );
+    target?.click();
+    await settle();
+  };
+
+  beforeEach(() => sessionStorage.clear());
+  afterEach(() => sessionStorage.clear());
+
+  describe('results', () => {
+    beforeEach(async () => {
+      configure();
+      await create();
+    });
+
+    it('should list the first page sorted by stars', () => {
+      expect(rows()).toEqual(['mod-1', 'mod-2']);
+      expect(element.querySelector('.results-count')?.textContent).toBe('3 repositories');
+    });
+
+    it('should show the next page', async () => {
+      await goToPage(1);
+
+      expect(rows()).toEqual(['mod-3']);
+      expect(sessionStorage.getItem(PAGE_KEY)).toBe('1');
+      expect(sessionStorage.getItem(RETURN_URL_KEY)).toBe('/home');
+    });
+
+    it('should show a loading state until the tab is loaded', async () => {
+      modules.set(undefined);
+      await settle();
+      expect(element.querySelector('.skeleton-list')).not.toBeNull();
+
+      modules.set(MODULES);
+      await settle();
+      expect(element.querySelector('.skeleton-list')).toBeNull();
+      expect(rows()).toEqual(['mod-1', 'mod-2']);
+    });
   });
 
-  afterEach(() => {
-    sessionStorage.clear();
+  describe('sort', () => {
+    beforeEach(async () => {
+      configure();
+      await create();
+    });
+
+    it('should apply and save the sort, and reset the page', async () => {
+      await goToPage(1);
+
+      await pick(sortSelect(), 'created');
+
+      expect(rows()).toEqual(['mod-2', 'mod-1']);
+      expect(paginator().componentInstance.pageIndex).toBe(0);
+      expect(sessionStorage.getItem(SORT_KEY)).toBe('created');
+      expect(sessionStorage.getItem(PAGE_KEY)).toBe('0');
+    });
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  describe('search', () => {
+    beforeEach(async () => {
+      configure();
+      await create();
+    });
+
+    it('should filter the results, save the search and reset the page', async () => {
+      await goToPage(1);
+
+      await type('mod-3');
+
+      expect(rows()).toEqual(['mod-3']);
+      expect(element.querySelector('.results-count')?.textContent).toBe('1 result for “mod-3”');
+      expect(sessionStorage.getItem(SEARCH_KEY)).toBe('mod-3');
+      expect(sessionStorage.getItem(PAGE_KEY)).toBe('0');
+    });
+
+    it('should clear the search with Escape and forget it', async () => {
+      await type('mod-3');
+      spyOn(searchInput(), 'focus');
+
+      searchInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      await settle();
+
+      expect(searchInput().value).toBe('');
+      expect(searchInput().focus).toHaveBeenCalled();
+      expect(rows()).toEqual(['mod-1', 'mod-2']);
+      expect(sessionStorage.getItem(SEARCH_KEY)).toBeNull();
+    });
+
+    it('should explain when nothing matches and offer a reset', async () => {
+      await type('nothing');
+
+      expect(element.querySelector('.empty-state p')?.textContent).toContain('Nothing matches “nothing”');
+      expect(paginator()).toBeNull();
+
+      await click('.empty-state button');
+
+      expect(searchInput().value).toBe('');
+      expect(rows()).toEqual(['mod-1', 'mod-2']);
+    });
+
+    it('should focus the search input when pressing /', () => {
+      spyOn(searchInput(), 'focus');
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: '/' }));
+
+      expect(searchInput().focus).toHaveBeenCalled();
+    });
+
+    it('should not steal / while typing in a field', () => {
+      spyOn(searchInput(), 'focus');
+
+      searchInput().dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true }));
+
+      expect(searchInput().focus).not.toHaveBeenCalled();
+    });
   });
 
-  it('should restore the current page from session storage', () => {
-    sessionStorage.setItem('azerothcore.catalogue.page', '2');
+  describe('filters', () => {
+    beforeEach(async () => {
+      configure();
+      await create();
+      await click('.filter-toggle');
+    });
 
-    const restoredFixture = TestBed.createComponent(HomeComponent);
+    it('should offer the topics and languages of the tab', () => {
+      const chips = Array.from(element.querySelectorAll('.filter-panel .filter-chip')).map((chip) => chip.textContent?.trim());
+      const languages = Array.from(element.querySelectorAll('#lang-filter option')).map((option) => option.textContent);
 
-    expect(restoredFixture.componentInstance.page).toBe(2);
-    restoredFixture.destroy();
+      expect(chips).toEqual(['module', 'lua']);
+      expect(languages).toEqual(['All languages', 'C++', 'Lua']);
+    });
+
+    it('should filter by topic and count the active filter', async () => {
+      await click('.filter-panel .filter-chip', 'lua');
+
+      expect(rows()).toEqual(['mod-1']);
+      expect(element.querySelector('.filter-badge')?.textContent).toBe('1');
+    });
+
+    it('should filter by language and minimum stars, and clear them all', async () => {
+      await pick(element.querySelector('#lang-filter') as HTMLSelectElement, 'C++');
+      expect(rows()).toEqual(['mod-2', 'mod-3']);
+
+      await pick(element.querySelector('#stars-filter') as HTMLSelectElement, '50');
+      expect(rows()).toEqual(['mod-2']);
+      expect(element.querySelector('.filter-badge')?.textContent).toBe('2');
+
+      await click('.clear-all');
+      expect(rows()).toEqual(['mod-1', 'mod-2']);
+      expect(element.querySelector('.filter-badge')).toBeNull();
+    });
   });
 
-  it('should save the current page and route when pagination changes', () => {
-    component.onPageChange({ pageIndex: 2 } as PageEvent);
+  describe('session restore', () => {
+    beforeEach(() => configure());
 
-    expect(sessionStorage.getItem('azerothcore.catalogue.page')).toBe('2');
-    expect(sessionStorage.getItem('azerothcore.catalogue.returnHash')).toBe('#/home');
+    it('should restore the page, the sort and the search', async () => {
+      sessionStorage.setItem(PAGE_KEY, '1');
+      sessionStorage.setItem(SORT_KEY, 'created');
+      sessionStorage.setItem(SEARCH_KEY, 'mod');
+
+      await create();
+
+      expect(paginator().componentInstance.pageIndex).toBe(1);
+      expect(sortSelect().value).toBe('created');
+      expect(searchInput().value).toBe('mod');
+    });
+
+    it('should ignore an unknown sort and an invalid page', async () => {
+      sessionStorage.setItem(PAGE_KEY, '-3');
+      sessionStorage.setItem(SORT_KEY, 'whatever');
+
+      await create();
+
+      expect(paginator().componentInstance.pageIndex).toBe(0);
+      expect(sortSelect().value).toBe('stars');
+    });
   });
 
-  it('should sort by stars by default', () => {
-    const items = component.currentPageItems(REPOS);
+  describe('tabs', () => {
+    const selectedTab = (root: HTMLElement) => root.querySelector('[role=tab][aria-selected=true]')?.textContent?.trim();
 
-    expect(items.map((item) => item.name)).toEqual(['popular', 'recently-pushed', 'newest']);
-  });
+    it('should reset the page and update the URL when changing tabs', async () => {
+      configure();
+      await create();
+      await goToPage(1);
 
-  it('should sort by last push when picking the updated sort', () => {
-    component.sort = 'updated';
+      fixture.debugElement.query(By.directive(MatTabGroup)).triggerEventHandler('selectedTabChange', { index: 1 });
+      await settle();
 
-    const items = component.currentPageItems(REPOS);
+      expect(paginator().componentInstance.pageIndex).toBe(0);
+      expect(sessionStorage.getItem(PAGE_KEY)).toBe('0');
+      expect(sessionStorage.getItem(RETURN_URL_KEY)).toBe('/tab/tools');
+      expect(TestBed.inject(Location).path()).toBe('/tab/tools');
+    });
 
-    expect(items.map((item) => item.name)).toEqual(['recently-pushed', 'newest', 'popular']);
-  });
+    it('should open the tab named in the URL', async () => {
+      configure([{ path: 'tab/:tab', component: HomeComponent }]);
 
-  it('should sort by creation date when picking the created sort', () => {
-    component.sort = 'created';
+      const harness = await RouterTestingHarness.create('/tab/tools');
 
-    const items = component.currentPageItems(REPOS);
+      expect(selectedTab(harness.routeNativeElement as HTMLElement)).toBe('Tools');
+    });
 
-    expect(items.map((item) => item.name)).toEqual(['newest', 'recently-pushed', 'popular']);
-  });
+    it('should open the first tab when the URL names an unknown one', async () => {
+      configure([{ path: 'tab/:tab', component: HomeComponent }]);
 
-  it('should save the sort and reset the page when the sort changes', () => {
-    component.page = 2;
-    component.sort = 'updated';
+      const harness = await RouterTestingHarness.create('/tab/unknown');
 
-    component.onSortChange('updated');
+      expect(selectedTab(harness.routeNativeElement as HTMLElement)).toBe('Modules');
+    });
 
-    expect(component.page).toBe(0);
-    expect(sessionStorage.getItem('azerothcore.catalogue.sort')).toBe('updated');
-  });
+    it('should follow the URL when the route param changes', async () => {
+      configure([{ path: 'tab/:tab', component: HomeComponent }]);
+      const harness = await RouterTestingHarness.create('/tab/tools');
+      expect(selectedTab(harness.routeNativeElement as HTMLElement)).toBe('Tools');
 
-  it('should restore the sort from session storage', () => {
-    sessionStorage.setItem('azerothcore.catalogue.sort', 'created');
+      await harness.navigateByUrl('/tab/module');
+      await harness.fixture.whenStable();
+      harness.detectChanges();
 
-    const restoredFixture = TestBed.createComponent(HomeComponent);
-
-    expect(restoredFixture.componentInstance.sort).toBe('created');
-    restoredFixture.destroy();
-  });
-
-  it('should fall back to the star sort when session storage holds an unknown sort', () => {
-    sessionStorage.setItem('azerothcore.catalogue.sort', 'whatever');
-
-    const restoredFixture = TestBed.createComponent(HomeComponent);
-
-    expect(restoredFixture.componentInstance.sort).toBe('stars');
-    restoredFixture.destroy();
-  });
-
-  it('should reset the page when changing tabs', () => {
-    component.page = 2;
-
-    component.onTabChange({ index: 0 } as MatTabChangeEvent);
-
-    expect(component.page).toBe(0);
-    expect(sessionStorage.getItem('azerothcore.catalogue.page')).toBe('0');
-    expect(sessionStorage.getItem('azerothcore.catalogue.returnHash')).toBe('#/tab/test');
-  });
-
-  it('should match repositories by name, description, topic, language or author', () => {
-    component.search = 'transmogrification';
-    expect(component.filteredLength(SEARCH_REPOS)).toBe(1);
-
-    component.search = 'azerothcore-lua';
-    expect(component.filteredLength(SEARCH_REPOS)).toBe(1);
-
-    component.search = 'C++';
-    expect(component.filteredLength(SEARCH_REPOS)).toBe(2);
-
-    component.search = 'someone';
-    expect(component.filteredLength(SEARCH_REPOS)).toBe(1);
-  });
-
-  it('should require every search term to match', () => {
-    component.search = 'module azerothcore';
-    expect(component.filteredLength(SEARCH_REPOS)).toBe(1);
-
-    component.search = 'eluna module';
-    expect(component.filteredLength(SEARCH_REPOS)).toBe(0);
-  });
-
-  it('should ignore case and accents when searching', () => {
-    component.search = 'ELUNA';
-    expect(component.filteredLength(SEARCH_REPOS)).toBe(1);
-
-    component.search = 'rapido';
-    expect(component.filteredLength(SEARCH_REPOS)).toBe(1);
-  });
-
-  it('should report how many results match', () => {
-    component.search = 'eluna';
-    expect(component.searchStatus(1)).toBe('1 result for “eluna”');
-
-    component.search = 'nothing';
-    expect(component.searchStatus(0)).toBe('No results for “nothing”');
-  });
-
-  it('should save the search and reset the page when the query changes', () => {
-    component.page = 2;
-
-    component.onSearchChange('eluna');
-
-    expect(component.page).toBe(0);
-    expect(sessionStorage.getItem('azerothcore.catalogue.search')).toBe('eluna');
-  });
-
-  it('should clear the search and forget it', () => {
-    component.search = 'eluna';
-    component.page = 2;
-    sessionStorage.setItem('azerothcore.catalogue.search', 'eluna');
-
-    component.clearSearch();
-
-    expect(component.search).toBe('');
-    expect(component.page).toBe(0);
-    expect(sessionStorage.getItem('azerothcore.catalogue.search')).toBeNull();
-  });
-
-  it('should restore the search from session storage', () => {
-    sessionStorage.setItem('azerothcore.catalogue.search', 'eluna');
-
-    const restoredFixture = TestBed.createComponent(HomeComponent);
-
-    expect(restoredFixture.componentInstance.search).toBe('eluna');
-    restoredFixture.destroy();
-  });
-
-  it('should focus the search input when pressing /', () => {
-    const input = fixture.nativeElement.querySelector('#search-input') as HTMLInputElement;
-    spyOn(input, 'focus');
-
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: '/' }));
-
-    expect(input.focus).toHaveBeenCalled();
+      expect(selectedTab(harness.routeNativeElement as HTMLElement)).toBe('Modules');
+    });
   });
 });

@@ -4,12 +4,12 @@
     <h1>Modules, tools and scripts for your server.</h1>
     <p class="lede">
       Browse everything the community maintains. Search by name, description or topic. Can't find a repository?
-      <a href="#/how-to">Learn how to add it</a>
+      <a routerLink="/how-to">Learn how to add it</a>
     </p>
 
     <div class="search-row">
       <div class="search-box">
-        <fa-icon class="search-icon" [icon]="faSearch" aria-hidden="true"></fa-icon>
+        <fa-icon class="search-icon" [icon]="faSearch" aria-hidden="true" />
         <input
           id="search-input"
           #searchInput
@@ -18,14 +18,14 @@
           inputmode="search"
           enterkeyhint="search"
           [(ngModel)]="search"
-          (ngModelChange)="onSearchChange($event)"
+          (ngModelChange)="resetPage()"
           (keydown.escape)="clearSearch()"
           placeholder="Search the catalogue…"
           aria-label="Search by name, description, topic or author"
           autocomplete="off"
           spellcheck="false"
         />
-        @if (search) {
+        @if (search()) {
           <button type="button" class="search-clear" (click)="clearSearch()" aria-label="Clear search">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -38,21 +38,21 @@
         <button
           type="button"
           class="filter-toggle"
-          [class.is-active]="filtersOpen || activeFilterCount > 0"
-          [attr.aria-expanded]="filtersOpen"
+          [class.is-active]="filtersOpen() || activeFilterCount() > 0"
+          [attr.aria-expanded]="filtersOpen()"
           aria-controls="filters-panel"
-          (click)="toggleFilters()"
+          (click)="filtersOpen.set(!filtersOpen())"
         >
-          <fa-icon [icon]="faFilter" aria-hidden="true"></fa-icon>
+          <fa-icon [icon]="faFilter" aria-hidden="true" />
           <span>Filters</span>
-          @if (activeFilterCount) {
-            <span class="filter-badge">{{ activeFilterCount }}</span>
+          @if (activeFilterCount()) {
+            <span class="filter-badge">{{ activeFilterCount() }}</span>
           }
         </button>
 
         <div class="sort-box">
-          <fa-icon class="sort-icon" [icon]="faSortAmountDown" aria-hidden="true"></fa-icon>
-          <select id="sort" [(ngModel)]="sort" (ngModelChange)="onSortChange($event)" aria-label="Sort repositories">
+          <fa-icon class="sort-icon" [icon]="faSortAmountDown" aria-hidden="true" />
+          <select id="sort" [(ngModel)]="sort" (ngModelChange)="resetPage()" aria-label="Sort repositories">
             @for (option of sortOptions; track option.key) {
               <option [value]="option.key">{{ option.label }}</option>
             }
@@ -62,158 +62,147 @@
     </div>
   </header>
 
-  @if (activeFilterCount) {
+  @if (activeFilterCount()) {
     <div class="active-filters">
       <span class="active-label">Active</span>
-      @for (topic of selectedTopics; track topic) {
+      @for (topic of selectedTopics(); track topic) {
         <button type="button" class="filter-chip selected" (click)="toggleTopic(topic)">
           {{ topic }} <span aria-hidden="true">×</span>
         </button>
       }
-      @if (selectedLanguage) {
+      @if (selectedLanguage()) {
         <button type="button" class="filter-chip selected" (click)="onLanguageChange('')">
-          {{ selectedLanguage }} <span aria-hidden="true">×</span>
+          {{ selectedLanguage() }} <span aria-hidden="true">×</span>
         </button>
       }
-      @if (minStars > 0) {
+      @if (minStars() > 0) {
         <button type="button" class="filter-chip selected" (click)="onMinStarsChange('0')">
-          ≥ {{ minStars }} stars <span aria-hidden="true">×</span>
+          ≥ {{ minStars() }} stars <span aria-hidden="true">×</span>
         </button>
       }
       <button type="button" class="clear-all" (click)="clearFilters()">Clear all</button>
     </div>
   }
 
-  @if (catalogueService.tabIndex !== -1) {
-    <div class="tabs-wrap">
-      <mat-tab-group
-        class="catalogue-tabs"
-        (focusChange)="resetPage()"
-        [selectedIndex]="catalogueService.tabIndex"
-        (selectedTabChange)="onTabChange($event)"
-      >
-        @for (key of catalogueService.confTabsKeys; track key) {
-          <mat-tab label="{{ key }}">
-            @if (catalogueService.items$[key] | async; as items) {
-              <div class="tab-body">
-                @if (filtersOpen) {
-                  <div class="filter-panel" id="filters-panel">
-                    <div class="filter-grid">
-                      <div class="filter-block">
-                        <span class="filter-label">Topics</span>
-                        <div class="filter-chips">
-                          @for (topic of topTopics(items); track topic) {
-                            <button type="button" class="filter-chip" [class.selected]="isTopicSelected(topic)" (click)="toggleTopic(topic)">
-                              {{ topic }}
-                            </button>
-                          } @empty {
-                            <span class="filter-empty">No topics in this tab</span>
-                          }
-                        </div>
-                      </div>
-
-                      <div class="filter-block">
-                        <label class="filter-label" for="lang-filter">Language</label>
-                        <select id="lang-filter" [value]="selectedLanguage" (change)="onLanguageChange($any($event.target).value)">
-                          <option value="">All languages</option>
-                          @for (language of languages(items); track language) {
-                            <option [value]="language">{{ language }}</option>
-                          }
-                        </select>
-                      </div>
-
-                      <div class="filter-block">
-                        <label class="filter-label" for="stars-filter">Minimum stars</label>
-                        <select id="stars-filter" [value]="minStars" (change)="onMinStarsChange($any($event.target).value)">
-                          @for (stars of starOptions; track stars) {
-                            <option [value]="stars">{{ stars === 0 ? 'Any' : `≥ ${stars}` }}</option>
-                          }
-                        </select>
+  <div class="tabs-wrap">
+    <mat-tab-group
+      class="catalogue-tabs"
+      (focusChange)="resetPage()"
+      [(selectedIndex)]="selectedTabIndex"
+      (selectedTabChange)="onTabChange($event)"
+    >
+      @for (tab of tabs; track tab.label) {
+        <mat-tab [label]="tab.label">
+          @if (tab.items()) {
+            <div class="tab-body">
+              @if (filtersOpen()) {
+                <div class="filter-panel" id="filters-panel">
+                  <div class="filter-grid">
+                    <div class="filter-block">
+                      <span class="filter-label">Topics</span>
+                      <div class="filter-chips">
+                        @for (topic of tab.topics(); track topic) {
+                          <button type="button" class="filter-chip" [class.selected]="isTopicSelected(topic)" (click)="toggleTopic(topic)">
+                            {{ topic }}
+                          </button>
+                        } @empty {
+                          <span class="filter-empty">No topics in this tab</span>
+                        }
                       </div>
                     </div>
 
-                    <p class="filter-tip">
-                      Tip: <code>topic:lua</code>, <code>lang:TypeScript</code>, <code>owner:azerothcore</code>, <code>stars:&gt;100</code>
-                    </p>
-                  </div>
-                }
+                    <div class="filter-block">
+                      <label class="filter-label" for="lang-filter">Language</label>
+                      <select
+                        id="lang-filter"
+                        #languageSelect
+                        [value]="selectedLanguage()"
+                        (change)="onLanguageChange(languageSelect.value)"
+                      >
+                        <option value="">All languages</option>
+                        @for (language of tab.languages(); track language) {
+                          <option [value]="language">{{ language }}</option>
+                        }
+                      </select>
+                    </div>
 
-                <ng-template #pager>
-                  <mat-paginator
-                    [pageIndex]="page"
-                    [length]="filteredLength(items)"
-                    [pageSize]="catalogueService.CONF.pageSize"
-                    (page)="onPageChange($event)"
-                    [hidePageSize]="true"
-                  >
-                  </mat-paginator>
-                </ng-template>
-
-                <div class="results-head">
-                  <span class="results-count" [class.is-query]="search">{{
-                    search ? searchStatus(filteredLength(items)) : repositoryCount(filteredLength(items))
-                  }}</span>
-                  <div class="results-actions">
-                    @if (search || activeFilterCount) {
-                      <button type="button" class="clear-link" (click)="clearAll()">Reset</button>
-                    }
-                    @if (filteredLength(items) > 0) {
-                      <ng-container [ngTemplateOutlet]="pager"></ng-container>
-                    }
+                    <div class="filter-block">
+                      <label class="filter-label" for="stars-filter">Minimum stars</label>
+                      <select id="stars-filter" #starsSelect [value]="minStars()" (change)="onMinStarsChange(starsSelect.value)">
+                        @for (stars of starOptions; track stars) {
+                          <option [value]="stars">{{ stars === 0 ? 'Any' : `≥ ${stars}` }}</option>
+                        }
+                      </select>
+                    </div>
                   </div>
+
+                  <p class="filter-tip">
+                    Tip: <code>topic:lua</code>, <code>lang:TypeScript</code>, <code>owner:azerothcore</code>, <code>stars:&gt;100</code>
+                  </p>
                 </div>
+              }
 
-                @if (filteredLength(items) > 0) {
-                  <div class="result-list">
-                    @for (item of currentPageItems(items); track item.id; let i = $index) {
-                      <app-repo
-                        [style.animation-delay.ms]="enterDelay(i)"
-                        [id]="item.id"
-                        [name]="item.name"
-                        [stars]="item.stargazers_count"
-                        [created]="item.created_at"
-                        [updated]="item.pushed_at"
-                        [description]="item.description"
-                        [fullName]="item.full_name"
-                        [topics]="item.topics || []"
-                        [starDelay]="i * 160"
-                      ></app-repo>
-                    }
-                  </div>
+              <ng-template #pager>
+                <mat-paginator
+                  [pageIndex]="page()"
+                  [length]="tab.matching().length"
+                  [pageSize]="pageSize"
+                  (page)="onPageChange($event)"
+                  [hidePageSize]="true"
+                />
+              </ng-template>
 
-                  <ng-container [ngTemplateOutlet]="pager"></ng-container>
-                } @else if (search || activeFilterCount) {
-                  <div class="empty-state" role="status" aria-live="polite">
-                    <fa-icon [icon]="faSearch"></fa-icon>
-                    <h5>No repositories found</h5>
-                    @if (search) {
-                      <p>Nothing matches “{{ search }}”. Try a different name, description or topic.</p>
-                    } @else {
-                      <p>No repositories match the selected filters.</p>
-                    }
-                    <button type="button" class="btn btn-outline-light btn-sm" (click)="clearAll()">Reset search and filters</button>
-                  </div>
-                }
-              </div>
-            } @else {
-              <div class="tab-body">
-                <p class="sr-only" role="status">Loading repositories…</p>
-                <div class="skeleton-list" aria-hidden="true">
-                  @for (row of skeletonRows; track $index) {
-                    <div class="skeleton-row">
-                      <span class="skeleton-icon"></span>
-                      <span class="skeleton-body">
-                        <span class="skeleton-line" style="width: 30%"></span>
-                        <span class="skeleton-line" style="width: 62%"></span>
-                      </span>
-                    </div>
+              <div class="results-head">
+                <span class="results-count" [class.is-query]="search()">{{ tab.resultsLabel() }}</span>
+                <div class="results-actions">
+                  @if (hasCriteria()) {
+                    <button type="button" class="clear-link" (click)="clearAll()">Reset</button>
+                  }
+                  @if (tab.matching().length > 0) {
+                    <ng-container [ngTemplateOutlet]="pager" />
                   }
                 </div>
               </div>
-            }
-          </mat-tab>
-        }
-      </mat-tab-group>
-    </div>
-  }
+
+              @if (tab.matching().length > 0) {
+                <div class="result-list">
+                  @for (item of tab.pageItems(); track item.id; let i = $index) {
+                    <app-repo [style.animation-delay.ms]="enterDelay(i)" [repo]="item" [starDelay]="i * 160" />
+                  }
+                </div>
+
+                <ng-container [ngTemplateOutlet]="pager" />
+              } @else if (hasCriteria()) {
+                <div class="empty-state" role="status" aria-live="polite">
+                  <fa-icon [icon]="faSearch" />
+                  <h5>No repositories found</h5>
+                  @if (search()) {
+                    <p>Nothing matches “{{ search() }}”. Try a different name, description or topic.</p>
+                  } @else {
+                    <p>No repositories match the selected filters.</p>
+                  }
+                  <button type="button" class="btn btn-outline-light btn-sm" (click)="clearAll()">Reset search and filters</button>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="tab-body">
+              <p class="sr-only" role="status">Loading repositories…</p>
+              <div class="skeleton-list" aria-hidden="true">
+                @for (row of skeletonRows; track $index) {
+                  <div class="skeleton-row">
+                    <span class="skeleton-icon"></span>
+                    <span class="skeleton-body">
+                      <span class="skeleton-line" style="width: 30%"></span>
+                      <span class="skeleton-line" style="width: 62%"></span>
+                    </span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </mat-tab>
+      }
+    </mat-tab-group>
+  </div>
 </section>
