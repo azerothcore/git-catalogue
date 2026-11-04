@@ -1,8 +1,11 @@
 <section class="catalogue-v2">
   <header class="masthead">
     <p class="eyebrow"><span class="eyebrow-text">AzerothCore · Catalogue</span></p>
-    <h1>Modules, tools and scripts<br />for your server.</h1>
-    <p class="lede">Browse everything the community maintains. Search by name, description or topic.</p>
+    <h1>Modules, tools and scripts for your server.</h1>
+    <p class="lede">
+      Browse everything the community maintains. Search by name, description or topic. Can't find a repository?
+      <a href="#/how-to">Learn how to add it</a>
+    </p>
 
     <div class="search-row">
       <div class="search-box">
@@ -58,8 +61,6 @@
       </div>
     </div>
   </header>
-
-  <p class="submit-line">Can't find a repository? <a href="#/how-to">Learn how to add it</a></p>
 
   @if (activeFilterCount) {
     <div class="active-filters">
@@ -137,13 +138,29 @@
                   </div>
                 }
 
+                <ng-template #pager>
+                  <mat-paginator
+                    [pageIndex]="page"
+                    [length]="filteredLength(items)"
+                    [pageSize]="catalogueService.CONF.pageSize"
+                    (page)="onPageChange($event)"
+                    [hidePageSize]="true"
+                  >
+                  </mat-paginator>
+                </ng-template>
+
                 <div class="results-head">
                   <span class="results-count" [class.is-query]="search">{{
                     search ? searchStatus(filteredLength(items)) : repositoryCount(filteredLength(items))
                   }}</span>
-                  @if (search || activeFilterCount) {
-                    <button type="button" class="clear-link" (click)="clearAll()">Reset</button>
-                  }
+                  <div class="results-actions">
+                    @if (search || activeFilterCount) {
+                      <button type="button" class="clear-link" (click)="clearAll()">Reset</button>
+                    }
+                    @if (filteredLength(items) > 0) {
+                      <ng-container [ngTemplateOutlet]="pager"></ng-container>
+                    }
+                  </div>
                 </div>
 
                 @if (filteredLength(items) > 0) {
@@ -164,14 +181,7 @@
                     }
                   </div>
 
-                  <mat-paginator
-                    [pageIndex]="page"
-                    [length]="filteredLength(items)"
-                    [pageSize]="catalogueService.CONF.pageSize"
-                    (page)="onPageChange($event)"
-                    [hidePageSize]="true"
-                  >
-                  </mat-paginator>
+                  <ng-container [ngTemplateOutlet]="pager"></ng-container>
                 } @else if (search || activeFilterCount) {
                   <div class="empty-state" role="status" aria-live="polite">
                     <fa-icon [icon]="faSearch"></fa-icon>

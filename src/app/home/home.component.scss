@@ -107,11 +107,21 @@ h1 {
 }
 
 .lede {
-  max-width: 34rem;
   margin: 1rem 0 0;
   color: #5f6b7a;
   font-size: 0.98rem;
   line-height: 1.6;
+
+  a {
+    color: #14171c;
+    text-decoration: underline;
+    text-decoration-color: #c9cfd8;
+    text-underline-offset: 3px;
+
+    &:hover {
+      text-decoration-color: #b4232a;
+    }
+  }
 }
 
 .search-row {
@@ -290,24 +300,6 @@ h1 {
   }
 }
 
-.submit-line {
-  margin: 1.1rem 0 0;
-  color: #8a94a3;
-  font-size: 0.82rem;
-  animation: rise 0.5s ease 0.06s both;
-
-  a {
-    color: #14171c;
-    text-decoration: underline;
-    text-decoration-color: #c9cfd8;
-    text-underline-offset: 3px;
-
-    &:hover {
-      text-decoration-color: #b4232a;
-    }
-  }
-}
-
 .active-filters {
   display: flex;
   flex-wrap: wrap;
@@ -347,7 +339,7 @@ h1 {
 }
 
 .tabs-wrap {
-  margin-top: 2.5rem;
+  margin-top: 1.25rem;
   animation: rise 0.5s ease 0.12s both;
 }
 
@@ -449,9 +441,34 @@ h1 {
 
 .results-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 1.1rem 0 0.9rem;
+  gap: 0.25rem 1rem;
+  padding: 0.6rem 0;
+
+  ::ng-deep mat-paginator {
+    .mat-mdc-paginator-container {
+      min-height: 0;
+      padding: 0;
+    }
+
+    .mat-mdc-paginator-range-label {
+      margin: 0 0.5rem 0 0;
+    }
+
+    .mat-mdc-icon-button {
+      --mat-icon-button-state-layer-size: 32px;
+      padding: 4px;
+    }
+  }
+}
+
+.results-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
 }
 
 .results-count {
@@ -686,7 +703,6 @@ h1 {
 
 @media (prefers-reduced-motion: reduce) {
   .masthead,
-  .submit-line,
   .active-filters,
   .tabs-wrap {
     animation: none;
