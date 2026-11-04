@@ -459,6 +459,8 @@ h1 {
 
     .mat-mdc-icon-button {
       --mat-icon-button-state-layer-size: 32px;
+      // the default 48px touch target sticks out of a 32px button and makes the tab body scroll sideways
+      --mat-icon-button-touch-target-display: none;
       padding: 4px;
     }
   }
