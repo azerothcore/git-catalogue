@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { faClock, faStar, IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import { faStar, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'app-repo',
@@ -24,5 +24,4 @@ export class RepoComponent {
   }
 
   readonly faStar: IconDefinition = faStar;
-  readonly faClock: IconDefinition = faClock;
 }

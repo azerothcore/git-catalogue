@@ -26,8 +26,7 @@
           <button type="button" class="search-clear" (click)="clearSearch()" aria-label="Clear search">
             <span aria-hidden="true">&times;</span>
           </button>
-        }
-        @if (!search) {
+        } @else {
           <kbd class="search-hint" aria-hidden="true">/</kbd>
         }
       </div>
@@ -106,8 +105,7 @@
                             <button type="button" class="filter-chip" [class.selected]="isTopicSelected(topic)" (click)="toggleTopic(topic)">
                               {{ topic }}
                             </button>
-                          }
-                          @if (!topTopics(items).length) {
+                          } @empty {
                             <span class="filter-empty">No topics in this tab</span>
                           }
                         </div>
@@ -127,7 +125,7 @@
                         <label class="filter-label" for="stars-filter">Minimum stars</label>
                         <select id="stars-filter" [value]="minStars" (change)="onMinStarsChange($any($event.target).value)">
                           @for (stars of starOptions; track stars) {
-                            <option [value]="stars">{{ stars === 0 ? 'Any' : '≥ ' + stars }}</option>
+                            <option [value]="stars">{{ stars === 0 ? 'Any' : `≥ ${stars}` }}</option>
                           }
                         </select>
                       </div>
@@ -165,23 +163,7 @@
                       ></app-repo>
                     }
                   </div>
-                }
 
-                @if (filteredLength(items) === 0 && (search || activeFilterCount)) {
-                  <div class="empty-state" role="status" aria-live="polite">
-                    <fa-icon [icon]="faSearch"></fa-icon>
-                    <h5>No repositories found</h5>
-                    @if (search) {
-                      <p>Nothing matches “{{ search }}”. Try a different name, description or topic.</p>
-                    }
-                    @if (!search) {
-                      <p>No repositories match the selected filters.</p>
-                    }
-                    <button type="button" class="btn btn-outline-light btn-sm" (click)="clearAll()">Reset search and filters</button>
-                  </div>
-                }
-
-                @if (filteredLength(items) > 0) {
                   <mat-paginator
                     [pageIndex]="page"
                     [length]="filteredLength(items)"
@@ -190,6 +172,17 @@
                     [hidePageSize]="true"
                   >
                   </mat-paginator>
+                } @else if (search || activeFilterCount) {
+                  <div class="empty-state" role="status" aria-live="polite">
+                    <fa-icon [icon]="faSearch"></fa-icon>
+                    <h5>No repositories found</h5>
+                    @if (search) {
+                      <p>Nothing matches “{{ search }}”. Try a different name, description or topic.</p>
+                    } @else {
+                      <p>No repositories match the selected filters.</p>
+                    }
+                    <button type="button" class="btn btn-outline-light btn-sm" (click)="clearAll()">Reset search and filters</button>
+                  </div>
                 }
               </div>
             } @else {

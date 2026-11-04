@@ -1,7 +1,7 @@
-<a class="repo-row" [href]="'#/details/' + id">
+<a class="repo-row" [href]="`#/details/${id}`">
   <img
     class="repo-row-icon"
-    [src]="'https://raw.githubusercontent.com/' + fullName + '/master/icon.png'"
+    [src]="`https://raw.githubusercontent.com/${fullName}/master/icon.png`"
     [alt]="name"
     loading="lazy"
     onerror="this.src = 'https://avatars0.githubusercontent.com/u/20147732?v=4';"

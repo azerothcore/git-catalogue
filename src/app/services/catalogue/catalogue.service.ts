@@ -135,7 +135,7 @@ export class CatalogueService {
   }
 
   getLocalRepo(id: number): Observable<Repository> {
-    const key = 'repo-' + id;
+    const key = `repo-${id}`;
 
     const item = localStorage.getItem(key);
     if (item && !this.expireMinutes(30, JSON.parse(item).timeDate)) {

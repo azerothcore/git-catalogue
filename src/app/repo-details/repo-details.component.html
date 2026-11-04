@@ -3,7 +3,7 @@
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a [href]="returnHash"><fa-icon [icon]="faCaretLeft"></fa-icon> Catalogue</a>
       <span class="sep">/</span>
-      <a [href]="'https://github.com/' + data.repo.owner.login" target="_blank" rel="noopener">{{ data.repo.owner.login }}</a>
+      <a [href]="`https://github.com/${data.repo.owner.login}`" target="_blank" rel="noopener">{{ data.repo.owner.login }}</a>
       <span class="sep">/</span>
       <span class="current">{{ data.repo.name }}</span>
     </nav>
@@ -21,7 +21,7 @@
           <h1>{{ data.repo.name }}</h1>
           <span class="repo-hero-owner">
             by
-            <a [href]="'https://github.com/' + data.repo.owner.login" target="_blank" rel="noopener">{{ data.repo.owner.login }}</a>
+            <a [href]="`https://github.com/${data.repo.owner.login}`" target="_blank" rel="noopener">{{ data.repo.owner.login }}</a>
           </span>
         </div>
 
@@ -45,7 +45,7 @@
         </a>
         <a
           class="btn btn-outline-secondary"
-          [href]="data.repo.html_url + '/archive/' + data.repo.default_branch + '.zip'"
+          [href]="`${data.repo.html_url}/archive/${data.repo.default_branch}.zip`"
           target="_blank"
           rel="noopener"
         >
@@ -108,7 +108,7 @@
           <div>
             <dt>Owner</dt>
             <dd>
-              <a [href]="'https://github.com/' + data.repo.owner.login" target="_blank" rel="noopener">{{ data.repo.owner.login }}</a>
+              <a [href]="`https://github.com/${data.repo.owner.login}`" target="_blank" rel="noopener">{{ data.repo.owner.login }}</a>
             </dd>
           </div>
           <div>

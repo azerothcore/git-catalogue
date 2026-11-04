@@ -4,16 +4,11 @@ import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import {
   faBalanceScale,
   faCaretLeft,
-  faClock,
   faCode,
   faCodeBranch,
   faExclamationCircle,
-  faExternalLinkAlt,
   faEye,
-  faGlobe,
   faStar,
-  faUserCircle,
-  faSync,
 } from '@fortawesome/free-solid-svg-icons';
 import { Observable } from 'rxjs';
 import { pluck, tap } from 'rxjs/operators';
@@ -39,16 +34,11 @@ export class RepoDetailsComponent {
   }
 
   readonly faCaretLeft = faCaretLeft;
-  readonly faGlobe = faGlobe;
-  readonly faUserCircle = faUserCircle;
   readonly faGithub = faGithub;
-  readonly faExternalLinkAlt = faExternalLinkAlt;
   readonly faEye = faEye;
   readonly faStar = faStar;
   readonly faCodeBranch = faCodeBranch;
-  readonly faClock = faClock;
   readonly faBalanceScale = faBalanceScale;
-  readonly faSync = faSync;
   readonly faCode = faCode;
   readonly faExclamationCircle = faExclamationCircle;
   readonly returnHash = this.readReturnHash();
